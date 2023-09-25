@@ -1,5 +1,7 @@
+use std::rc::Rc;
 use serde::{Deserialize, Serialize};
-use qrlew::{self, Ready};
+use qrlew::{self, Ready as _, Relation, With as _};
+use super::*;
 
 /// Simplified DataType
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -84,16 +86,29 @@ struct Dataset {
     tables: Vec<Table>,
 }
 
-impl From<Dataset> for qrlew::hierarchy::Hierarchy<qrlew::Relation> {
+impl From<Dataset> for qrlew::hierarchy::Hierarchy<Rc<qrlew::Relation>> {
     fn from(value: Dataset) -> Self {
-        value.tables.into_iter().map(|t| (t.path.clone(), qrlew::Relation::from(t))).collect()
+        value.tables.into_iter().map(|t| (t.path.clone(), Rc::new(qrlew::Relation::from(t)))).collect()
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-struct Dot {
+pub struct Dot {
     dataset: Dataset,
     query: String,
+    dark_mode: bool,
+}
+
+// Relation::try_from(parse(query).unwrap().with(&database.relations())).unwrap();
+//             relation.display_dot();
+
+impl Dot {
+    pub fn response(self) -> Result<String> {
+        let query = qrlew::sql::relation::parse(&self.query)?;
+        let mut response = Vec::new();
+        Relation::try_from(query.with(&self.dataset.into()))?.dot(&mut response, if self.dark_mode {&["dark"]} else {&[]})?;
+        Ok(String::from_utf8(response)?)
+    }
 }
 
 
@@ -104,7 +119,7 @@ mod tests {
 
     #[test]
     fn test_dot_serialize() {
-        let query = Dot {
+        let request = Dot {
             dataset: Dataset { tables: vec![
                 Table {
                     name: "table_1".to_string(),
@@ -116,15 +131,23 @@ mod tests {
                     size: 10000 }
             ]},
             query: "SELECT * FROM table_1".to_string(),
+            dark_mode: true,
         };
 
-        println!("{}", serde_json::to_string(&query).unwrap());
+        println!("{}", serde_json::to_string(&request).unwrap());
     }
 
     #[test]
     fn test_dot_deserialize() {
-        let query_str = r#"{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1"}"#;
-        let query: Dot = serde_json::from_str(&query_str).unwrap();
-        println!("{:?}", query);
+        let request_str = r#"{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":true}"#;
+        let request: Dot = serde_json::from_str(&request_str).unwrap();
+        println!("{:?}", request);
+    }
+
+    #[test]
+    fn test_dot() {
+        let request_str = r#"{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}"#;
+        let request: Dot = serde_json::from_str(&request_str).unwrap();
+        println!("{}", request.response().unwrap());
     }
 }
