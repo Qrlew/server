@@ -1,0 +1,21 @@
+[package]
+authors = ["Nicolas Grislain <ng@sarus.tech>"]
+name = "qrlew-server"
+version = "0.3.0"
+edition = "2021"
+description = "Qrlew - Server"
+documentation = "https://docs.rs/qrlew-server"
+readme = "README.md"
+homepage = "https://sarus.tech/"
+repository = "https://github.com/Qrlew/server"
+license = "Apache-2.0"
+keywords = ["sql", "data", "web", "http"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+qrlew = "0.3"
+axum = "0.6"
+tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
+serde = { version = "1.0", features = ["derive", "rc"] }
+serde_json = "1.0"
