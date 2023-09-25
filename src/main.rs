@@ -6,10 +6,8 @@ use axum::{
     extract,
     response::{self, IntoResponse},
     routing::{get, post},
-    handler::Handler,
     Router,
 };
-use serde::{Deserialize, Serialize};
 use serde_json;
 
 #[derive(Debug, Clone)]
@@ -78,6 +76,10 @@ impl From<io::Error> for Error {
 pub type Result<T> = result::Result<T, Error>;
 
 async fn dot(extract::Json(dot_request): extract::Json<request::Dot>) -> Result<String> {
+    dot_request.response()
+}
+
+async fn protection(extract::Json(dot_request): extract::Json<request::Dot>) -> Result<String> {
     dot_request.response()
 }
 

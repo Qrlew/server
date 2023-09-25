@@ -99,9 +99,6 @@ pub struct Dot {
     dark_mode: bool,
 }
 
-// Relation::try_from(parse(query).unwrap().with(&database.relations())).unwrap();
-//             relation.display_dot();
-
 impl Dot {
     pub fn response(self) -> Result<String> {
         let query = qrlew::sql::relation::parse(&self.query)?;
@@ -109,6 +106,13 @@ impl Dot {
         Relation::try_from(query.with(&self.dataset.into()))?.dot(&mut response, if self.dark_mode {&["dark"]} else {&[]})?;
         Ok(String::from_utf8(response)?)
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+pub struct Protect {
+    dataset: Dataset,
+    query: String,
+    protected_entity: String,
 }
 
 
