@@ -79,8 +79,8 @@ async fn dot(extract::Json(dot_request): extract::Json<request::Dot>) -> Result<
     dot_request.response()
 }
 
-async fn protection(extract::Json(dot_request): extract::Json<request::Dot>) -> Result<String> {
-    dot_request.response()
+async fn protect(extract::Json(protect_request): extract::Json<request::Protect>) -> Result<String> {
+    protect_request.response()
 }
 
 #[tokio::main]
@@ -88,7 +88,8 @@ async fn main() {
     // build our application with a single route
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
-        .route("/dot", post(dot));
+        .route("/dot", post(dot))
+        .route("/protect", post(protect));
 
     // run it with hyper on localhost:3000
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
@@ -98,4 +99,5 @@ async fn main() {
 
     // Test with:
     // curl -d '{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}' -H "Content-Type: application/json" -X POST localhost:3000/dot
+    // curl -d '{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]]}' -H "Content-Type: application/json" -X POST localhost:3000/protect
 }

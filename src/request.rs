@@ -1,6 +1,6 @@
-use std::rc::Rc;
+use std::{sync::Arc, ops::Deref};
 use serde::{Deserialize, Serialize};
-use qrlew::{self, Ready as _, Relation, With as _};
+use qrlew::{self, Ready as _, Relation, With as _, ast::Query};
 use super::*;
 
 /// Simplified DataType
@@ -86,9 +86,9 @@ struct Dataset {
     tables: Vec<Table>,
 }
 
-impl From<Dataset> for qrlew::hierarchy::Hierarchy<Rc<qrlew::Relation>> {
+impl From<Dataset> for qrlew::hierarchy::Hierarchy<Arc<qrlew::Relation>> {
     fn from(value: Dataset) -> Self {
-        value.tables.into_iter().map(|t| (t.path.clone(), Rc::new(qrlew::Relation::from(t)))).collect()
+        value.tables.into_iter().map(|t| (t.path.clone(), Arc::new(qrlew::Relation::from(t)))).collect()
     }
 }
 
@@ -112,7 +112,19 @@ impl Dot {
 pub struct Protect {
     dataset: Dataset,
     query: String,
-    protected_entity: String,
+    protected_entity: Vec<(String, Vec<(String, String, String)>, String)>,
+}
+
+impl Protect {
+    pub fn response(self) -> Result<String> {
+        let query = qrlew::sql::relation::parse(&self.query)?;
+        let relations = self.dataset.into();
+        let relation = Relation::try_from(query.with(&relations)).unwrap();
+        let protected_entity = self.protected_entity.clone();
+        let borrowed_protected_entity = protected_entity.iter().map(|(source, links, protected_col)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), protected_col.as_str())).collect();
+        let protected_relation = relation.force_protect_from_field_paths(&relations, borrowed_protected_entity);
+        Ok(Query::from(protected_relation.deref()).to_string())
+    }
 }
 
 
@@ -152,6 +164,56 @@ mod tests {
     fn test_dot() {
         let request_str = r#"{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}"#;
         let request: Dot = serde_json::from_str(&request_str).unwrap();
+        println!("{}", request.response().unwrap());
+    }
+
+    #[test]
+    fn test_protect_serialize() {
+        let request = Protect {
+            dataset: Dataset { tables: vec![
+                Table {
+                    name: "user_table".to_string(),
+                    path: vec!["schema".to_string(), "user_table".to_string()],
+                    schema: Schema { fields: vec![
+                        Field { name: "id".to_string(), data_type: DataType::Integer },
+                        Field { name: "name".to_string(), data_type: DataType::Text },
+                        Field { name: "age".to_string(), data_type: DataType::Integer },
+                        Field { name: "weight".to_string(), data_type: DataType::Float },
+                    ]},
+                    size: 10000,
+                },
+                Table {
+                    name: "action_table".to_string(),
+                    path: vec!["schema".to_string(), "action_table".to_string()],
+                    schema: Schema { fields: vec![
+                        Field { name: "action".to_string(), data_type: DataType::Text },
+                        Field { name: "user_id".to_string(), data_type: DataType::Integer },
+                        Field { name: "duration".to_string(), data_type: DataType::Float },
+                    ]},
+                    size: 10000,
+                },
+            ]},
+            query: "SELECT * FROM action_table".to_string(),
+            protected_entity: vec![
+                ("user_table".to_string(), vec![], "id".to_string()),
+                ("action_table".to_string(), vec![("user_id".to_string(), "user_table".to_string(), "id".to_string())], "id".to_string()),
+            ],
+        };
+
+        println!("{}", serde_json::to_string(&request).unwrap());
+    }
+
+    #[test]
+    fn test_protect_deserialize() {
+        let request_str = r#"{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]]}"#;
+        let request: Protect = serde_json::from_str(&request_str).unwrap();
+        println!("{:?}", request);
+    }
+
+    #[test]
+    fn test_protect() {
+        let request_str = r#"{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]]}"#;
+        let request: Protect = serde_json::from_str(&request_str).unwrap();
         println!("{}", request.response().unwrap());
     }
 }
