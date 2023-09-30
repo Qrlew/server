@@ -28,6 +28,10 @@ impl Authenticator {
         Ok(Authenticator::new(RsaPrivateKey::new(&mut rng, bits)?))
     }
 
+    pub fn random_2048() -> Result<Self> {
+        Authenticator::random(2048)
+    }
+
     // Accessors
     pub fn private_key(&self) -> &RsaPrivateKey {
         &self.private_key
@@ -48,5 +52,20 @@ impl Authenticator {
 
     pub fn verify(&self, text: String, signature: String) -> Result<()> {
         Ok(self.verifying_key.verify(text.as_bytes(), &Signature::try_from(general_purpose::STANDARD_NO_PAD.decode(signature)?.as_slice())?)?)
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json;
+
+    #[test]
+    fn test_signature() {
+        let auth = Authenticator::random_2048().unwrap();
+        let signature = auth.sign("Hello Sarus !".to_string());
+        println!("{signature}");
+        auth.verify("Hello Sarus !".to_string(), signature).expect("OK");
     }
 }
