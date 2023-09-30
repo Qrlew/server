@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod request;
 
 use std::{error, result, fmt, io, string};
@@ -9,6 +10,8 @@ use axum::{
     Router,
 };
 use serde_json;
+
+use qrlew::differential_privacy;
 
 #[derive(Debug, Clone)]
 pub enum Error {
@@ -72,6 +75,12 @@ impl From<io::Error> for Error {
     }
 }
 
+impl From<differential_privacy::Error> for Error {
+    fn from(err: differential_privacy::Error) -> Self {
+        Error::other(err)
+    }
+}
+
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -83,13 +92,18 @@ async fn protect(extract::Json(protect_request): extract::Json<request::Protect>
     protect_request.response()
 }
 
+async fn dp_compile(extract::Json(dp_compile_request): extract::Json<request::DPCompile>) -> Result<String> {
+    dp_compile_request.response()
+}
+
 #[tokio::main]
 async fn main() {
     // build our application with a single route
     let app = Router::new()
-        .route("/", get(|| async { "Hello, World!" }))
+        .route("/", get(|| async { format!("This is Qrlew server {}", env!("CARGO_PKG_VERSION"))}))
         .route("/dot", post(dot))
-        .route("/protect", post(protect));
+        .route("/protect", post(protect))
+        .route("/dp_compile", post(dp_compile)); 
 
     // run it with hyper on localhost:3000
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
@@ -100,4 +114,5 @@ async fn main() {
     // Test with:
     // curl -d '{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}' -H "Content-Type: application/json" -X POST localhost:3000/dot
     // curl -d '{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]]}' -H "Content-Type: application/json" -X POST localhost:3000/protect
+    // curl -d '{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001,"epsilon_tau_thresholding":1.0,"delta_tau_thresholding":0.00001}' -H "Content-Type: application/json" -X POST localhost:3000/dp_compile
 }
