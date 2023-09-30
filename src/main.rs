@@ -87,6 +87,17 @@ impl From<rsa::Error> for Error {
     }
 }
 
+impl From<base64::DecodeError> for Error {
+    fn from(err: base64::DecodeError) -> Self {
+        Error::other(err)
+    }
+}
+
+impl From<rsa::signature::Error> for Error {
+    fn from(err: rsa::signature::Error) -> Self {
+        Error::other(err)
+    }
+}
 
 pub type Result<T> = result::Result<T, Error>;
 

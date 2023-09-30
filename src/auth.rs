@@ -1,8 +1,9 @@
 use super::{Error, Result};
 use rand;
+use base64::{Engine as _, engine::general_purpose};
 use rsa::{
-    Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey,
-    pkcs1v15::{SigningKey, VerifyingKey},
+    Pkcs1v15Encrypt, RsaPrivateKey,
+    pkcs1v15::{SigningKey, VerifyingKey, Signature},
     signature::{Keypair, RandomizedSigner, SignatureEncoding, Verifier},
     sha2::{Digest, Sha256},
 };
@@ -38,5 +39,14 @@ impl Authenticator {
 
     pub fn verifying_key(&self) -> &VerifyingKey<Sha256> {
         &self.verifying_key
+    }
+
+    pub fn sign(&self, text: String) -> String {
+        let mut rng = rand::thread_rng();
+        general_purpose::STANDARD_NO_PAD.encode(self.signing_key.sign_with_rng(&mut rng, text.as_bytes()).to_bytes())
+    }
+
+    pub fn verify(&self, text: String, signature: String) -> Result<()> {
+        Ok(self.verifying_key.verify(text.as_bytes(), &Signature::try_from(general_purpose::STANDARD_NO_PAD.decode(signature)?.as_slice())?)?)
     }
 }
