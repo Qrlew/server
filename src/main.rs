@@ -2,7 +2,7 @@ pub mod auth;
 pub mod request;
 
 use std::{error, result, fmt, io, string};
-
+use rsa;
 use axum::{
     extract,
     response::{self, IntoResponse},
@@ -77,6 +77,12 @@ impl From<io::Error> for Error {
 
 impl From<differential_privacy::Error> for Error {
     fn from(err: differential_privacy::Error) -> Self {
+        Error::other(err)
+    }
+}
+
+impl From<rsa::Error> for Error {
+    fn from(err: rsa::Error) -> Self {
         Error::other(err)
     }
 }

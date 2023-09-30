@@ -15,7 +15,7 @@ pub struct Authenticator {
 
 impl Authenticator {
     pub fn new(private_key: RsaPrivateKey) -> Self {
-        let signing_key = SigningKey::<Sha256>::new(private_key);
+        let signing_key = SigningKey::<Sha256>::new(private_key.clone());
         let verifying_key = signing_key.verifying_key();
         Authenticator {
             private_key, signing_key, verifying_key
