@@ -10,7 +10,7 @@ pub struct Response {
 }
 
 impl Response {
-    pub fn value(value: String) -> Self {
+    pub fn new(value: String) -> Self {
         Response {
             value,
             signature: None,
@@ -22,6 +22,14 @@ impl Response {
             signature: Some(auth.sign(&value)),
             value,
         }
+    }
+
+    pub fn value(&self) -> &str {
+        &self.value
+    }
+
+    pub fn signature(&self) -> Option<&str> {
+        self.signature.as_deref()
     }
 }
 
@@ -39,7 +47,7 @@ mod tests {
 
     #[test]
     fn test_response() {
-        let response = Response::value("Hello Sarus !".to_string());
+        let response = Response::new("Hello Sarus !".to_string());
         let signed_response = Response::signed("Hello Sarus !".to_string(), &auth::Authenticator::random_2048().unwrap());
         println!("{:?}", signed_response);
     }

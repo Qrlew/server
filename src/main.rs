@@ -8,6 +8,7 @@ pub use response::Response;
 
 use std::{error, result, fmt, io, string, sync::OnceLock};
 use rsa;
+use rsa::pkcs8::spki::{EncodePublicKey, der::pem::LineEnding};
 use axum::{
     extract,
     routing::{get, post},
@@ -103,6 +104,12 @@ impl From<rsa::signature::Error> for Error {
     }
 }
 
+impl From<rsa::pkcs8::spki::Error> for Error {
+    fn from(err: rsa::pkcs8::spki::Error) -> Self {
+        Error::other(err)
+    }
+}
+
 pub type Result<T> = result::Result<T, Error>;
 
 /// A global shared Authenticator
@@ -111,6 +118,14 @@ static AUTH: OnceLock<Authenticator> = OnceLock::new();
 /// A function used to count named objects
 fn auth() -> &'static Authenticator {
     AUTH.get_or_init(|| Authenticator::random_2048().unwrap())
+}
+
+async fn verify(extract::Json(response): extract::Json<Response>) -> Result<String> {
+    auth().verify(response.value(), response.signature().ok_or(Error::invalid_request(response.value()))?).and_then(|_| Ok(format!("Verified"))).or_else(|_| Ok(format!("Not verified")))
+}
+
+async fn public_key() -> Result<String> {
+    Ok(auth().verifying_key().to_public_key_pem(LineEnding::CRLF)?)
 }
 
 async fn dot(extract::Json(dot_request): extract::Json<request::Dot>) -> Result<Response> {
@@ -130,6 +145,7 @@ async fn main() {
     // build our application with a single route
     let app = Router::new()
         .route("/", get(|| async { format!("This is Qrlew server {}", env!("CARGO_PKG_VERSION"))}))
+        .route("/verify", post(verify))
         .route("/dot", post(dot))
         .route("/protect", post(protect))
         .route("/dp_compile", post(dp_compile)); 

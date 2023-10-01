@@ -104,7 +104,7 @@ impl Dot {
         let query = qrlew::sql::relation::parse(&self.query)?;
         let mut response = Vec::new();
         Relation::try_from(query.with(&self.dataset.into()))?.dot(&mut response, if self.dark_mode {&["dark"]} else {&[]})?;
-        Ok(Response::value(String::from_utf8(response)?))
+        Ok(Response::new(String::from_utf8(response)?))
     }
 }
 
@@ -123,7 +123,7 @@ impl Protect {
         let protected_entity = self.protected_entity.clone();
         let borrowed_protected_entity = protected_entity.iter().map(|(source, links, protected_col)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), protected_col.as_str())).collect();
         let protected_relation = relation.force_protect_from_field_paths(&relations, borrowed_protected_entity);
-        Ok(Response::value(Query::from(protected_relation.deref()).to_string()))
+        Ok(Response::new(Query::from(protected_relation.deref()).to_string()))
     }
 }
 
