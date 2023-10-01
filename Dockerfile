@@ -1,8 +1,12 @@
 FROM rust:slim AS builder
 WORKDIR /app
 COPY . .
-RUN cargo build --locked --release --package qrlew-server && \
-  cp ./target/release/qrlew-server /app
+RUN \
+  --mount=type=cache,target=/app/target/ \
+  --mount=type=cache,target=/usr/local/cargo/registry/ \
+  /bin/bash -c \
+  'cargo build --locked --release --package qrlew-server && \
+  cp ./target/release/qrlew-server /app'
 
 FROM debian:stable-slim AS final
 RUN adduser \
