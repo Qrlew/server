@@ -31,7 +31,8 @@ jobs:
       run: cargo test --verbose
   
   build-docker:
-
+    
+    needs: build-rust
     runs-on: ubuntu-latest
     permissions:
       contents: read
