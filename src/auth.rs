@@ -45,12 +45,12 @@ impl Authenticator {
         &self.verifying_key
     }
 
-    pub fn sign(&self, text: String) -> String {
+    pub fn sign(&self, text: &str) -> String {
         let mut rng = rand::thread_rng();
         general_purpose::STANDARD_NO_PAD.encode(self.signing_key.sign_with_rng(&mut rng, text.as_bytes()).to_bytes())
     }
 
-    pub fn verify(&self, text: String, signature: String) -> Result<()> {
+    pub fn verify(&self, text: &str, signature: &str) -> Result<()> {
         Ok(self.verifying_key.verify(text.as_bytes(), &Signature::try_from(general_purpose::STANDARD_NO_PAD.decode(signature)?.as_slice())?)?)
     }
 }
@@ -64,8 +64,8 @@ mod tests {
     #[test]
     fn test_signature() {
         let auth = Authenticator::random_2048().unwrap();
-        let signature = auth.sign("Hello Sarus !".to_string());
+        let signature = auth.sign("Hello Sarus !");
         println!("{signature}");
-        auth.verify("Hello Sarus !".to_string(), signature).expect("OK");
+        auth.verify("Hello Sarus !", &signature).expect("OK");
     }
 }

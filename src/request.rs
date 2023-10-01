@@ -100,11 +100,11 @@ pub struct Dot {
 }
 
 impl Dot {
-    pub fn response(self) -> Result<String> {
+    pub fn response(self) -> Result<Response> {
         let query = qrlew::sql::relation::parse(&self.query)?;
         let mut response = Vec::new();
         Relation::try_from(query.with(&self.dataset.into()))?.dot(&mut response, if self.dark_mode {&["dark"]} else {&[]})?;
-        Ok(String::from_utf8(response)?)
+        Ok(Response::value(String::from_utf8(response)?))
     }
 }
 
@@ -116,14 +116,14 @@ pub struct Protect {
 }
 
 impl Protect {
-    pub fn response(self) -> Result<String> {
+    pub fn response(self) -> Result<Response> {
         let query = qrlew::sql::relation::parse(&self.query)?;
         let relations = self.dataset.into();
         let relation = Relation::try_from(query.with(&relations)).unwrap();
         let protected_entity = self.protected_entity.clone();
         let borrowed_protected_entity = protected_entity.iter().map(|(source, links, protected_col)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), protected_col.as_str())).collect();
         let protected_relation = relation.force_protect_from_field_paths(&relations, borrowed_protected_entity);
-        Ok(Query::from(protected_relation.deref()).to_string())
+        Ok(Response::value(Query::from(protected_relation.deref()).to_string()))
     }
 }
 
@@ -139,7 +139,7 @@ pub struct DPCompile {
 }
 
 impl DPCompile {
-    pub fn response(self) -> Result<String> {
+    pub fn response(self, auth: &Authenticator) -> Result<Response> {
         let query = qrlew::sql::relation::parse(&self.query)?;
         let relations = self.dataset.into();
         let relation = Relation::try_from(query.with(&relations)).unwrap();
@@ -147,7 +147,7 @@ impl DPCompile {
         let borrowed_protected_entity = protected_entity.iter().map(|(source, links, protected_col)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), protected_col.as_str())).collect();
         let protected_relation = relation.force_protect_from_field_paths(&relations, borrowed_protected_entity);
         let dp_relation = protected_relation.dp_compile(self.epsilon, self.delta, self.epsilon_tau_thresholding, self.delta_tau_thresholding)?;
-        Ok(Query::from(dp_relation.deref()).to_string())
+        Ok(Response::signed(Query::from(dp_relation.deref()).to_string(), auth))
     }
 }
 
@@ -187,7 +187,7 @@ mod tests {
     fn test_dot() {
         let request_str = r#"{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}"#;
         let request: Dot = serde_json::from_str(&request_str).unwrap();
-        println!("{}", request.response().unwrap());
+        println!("{:?}", request.response().unwrap());
     }
 
     #[test]
@@ -237,7 +237,7 @@ mod tests {
     fn test_protect() {
         let request_str = r#"{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]]}"#;
         let request: Protect = serde_json::from_str(&request_str).unwrap();
-        println!("{}", request.response().unwrap());
+        println!("{:?}", request.response().unwrap());
     }
 
     #[test]
@@ -291,10 +291,11 @@ mod tests {
 
     #[test]
     fn test_dp_compile() {
+        let auth = Authenticator::random_2048().unwrap();
         let request_str = r#"
 {"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001,"epsilon_tau_thresholding":1.0,"delta_tau_thresholding":0.00001}
 "#;
         let request: DPCompile = serde_json::from_str(&request_str).unwrap();
-        println!("{}", request.response().unwrap());
+        println!("{:?}", request.response(&auth).unwrap());
     }
 }

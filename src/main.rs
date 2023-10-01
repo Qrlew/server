@@ -1,17 +1,22 @@
 pub mod auth;
 pub mod request;
+pub mod response;
+// Reexport
+pub use auth::Authenticator;
+pub use request::{Dot, Protect, DPCompile};
+pub use response::Response;
 
 use std::{error, result, fmt, io, string};
 use rsa;
 use axum::{
     extract,
-    response::{self, IntoResponse},
+    response::{Response as AxumResponse, IntoResponse},
     routing::{get, post},
     Router,
 };
 use serde_json;
-
 use qrlew::differential_privacy;
+
 
 #[derive(Debug, Clone)]
 pub enum Error {
@@ -46,7 +51,7 @@ impl error::Error for Error {}
 
 // Errors need to be convertible to responses
 impl IntoResponse for Error {
-    fn into_response(self) -> response::Response {
+    fn into_response(self) -> AxumResponse {
         self.to_string().into_response()
     }
 }
