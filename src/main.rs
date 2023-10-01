@@ -6,11 +6,10 @@ pub use auth::Authenticator;
 pub use request::{Dot, Protect, DPCompile};
 pub use response::Response;
 
-use std::{error, result, fmt, io, string};
+use std::{error, result, fmt, io, string, sync::OnceLock};
 use rsa;
 use axum::{
     extract,
-    response::{Response as AxumResponse, IntoResponse},
     routing::{get, post},
     Router,
 };
@@ -50,8 +49,8 @@ impl fmt::Display for Error {
 impl error::Error for Error {}
 
 // Errors need to be convertible to responses
-impl IntoResponse for Error {
-    fn into_response(self) -> AxumResponse {
+impl axum::response::IntoResponse for Error {
+    fn into_response(self) -> axum::response::Response {
         self.to_string().into_response()
     }
 }
@@ -106,16 +105,24 @@ impl From<rsa::signature::Error> for Error {
 
 pub type Result<T> = result::Result<T, Error>;
 
-async fn dot(extract::Json(dot_request): extract::Json<request::Dot>) -> Result<String> {
+/// A global shared Authenticator
+static AUTH: OnceLock<Authenticator> = OnceLock::new();
+
+/// A function used to count named objects
+fn auth() -> &'static Authenticator {
+    AUTH.get_or_init(|| Authenticator::random_2048().unwrap())
+}
+
+async fn dot(extract::Json(dot_request): extract::Json<request::Dot>) -> Result<Response> {
     dot_request.response()
 }
 
-async fn protect(extract::Json(protect_request): extract::Json<request::Protect>) -> Result<String> {
+async fn protect(extract::Json(protect_request): extract::Json<request::Protect>) -> Result<Response> {
     protect_request.response()
 }
 
-async fn dp_compile(extract::Json(dp_compile_request): extract::Json<request::DPCompile>) -> Result<String> {
-    dp_compile_request.response()
+async fn dp_compile(extract::Json(dp_compile_request): extract::Json<request::DPCompile>) -> Result<Response> {
+    dp_compile_request.response(auth())
 }
 
 #[tokio::main]

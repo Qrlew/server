@@ -1,6 +1,6 @@
 use std::{sync::Arc, ops::Deref};
 use serde::{Deserialize, Serialize};
-use crate::auth;
+use crate::{auth, Error};
 
 /// Simplified DataType
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
@@ -22,6 +22,13 @@ impl Response {
             signature: Some(auth.sign(&value)),
             value,
         }
+    }
+}
+
+// Errors need to be convertible to responses
+impl axum::response::IntoResponse for Response {
+    fn into_response(self) -> axum::response::Response {
+        serde_json::to_string(&self).or_else(|err| Err(Error::from(err))).into_response()
     }
 }
 
