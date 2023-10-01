@@ -145,6 +145,7 @@ async fn main() {
     // build our application with a single route
     let app = Router::new()
         .route("/", get(|| async { format!("This is Qrlew server {}", env!("CARGO_PKG_VERSION"))}))
+        .route("/public_key", get(public_key))
         .route("/verify", post(verify))
         .route("/dot", post(dot))
         .route("/protect", post(protect))
