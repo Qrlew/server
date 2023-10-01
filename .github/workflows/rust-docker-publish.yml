@@ -103,3 +103,31 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+ 
+  deploy-to-gcp:
+    needs: build-rust
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Google Cloud CLI
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@v0.5.0
+      with:
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        project_id: sarus-tests
+
+    - name: Authenticate with GCP
+      run: gcloud auth activate-service-account --key-file=${{ secrets.GCP_SA_KEY }}
+
+    - name: Build and push Docker image
+      run: |
+        # Build your Docker image
+        docker build -t gcr.io/sarus-tests/qrlew-server:main .
+        
+        # Authenticate to the Artifact Registry
+        docker auth configure-docker gcr.io
+        
+        # Push the Docker image to Artifact Registry
+        docker push gcr.io/sarus-tests/qrlew-server:main
