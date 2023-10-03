@@ -2,11 +2,15 @@ use super::{Error, Result};
 use rand;
 use base64::{Engine as _, engine::general_purpose};
 use rsa::{
-    Pkcs1v15Encrypt, RsaPrivateKey,
+    RsaPrivateKey,
     pkcs1v15::{SigningKey, VerifyingKey, Signature},
     signature::{Keypair, RandomizedSigner, SignatureEncoding, Verifier},
-    sha2::{Digest, Sha256},
+    sha2::Sha256,
+    pkcs8::{EncodePrivateKey, DecodePrivateKey, spki::der::pem::LineEnding},
+
 };
+
+const SIZE: usize = 2048;
 
 pub struct Authenticator {
     private_key: RsaPrivateKey,
@@ -28,8 +32,21 @@ impl Authenticator {
         Ok(Authenticator::new(RsaPrivateKey::new(&mut rng, bits)?))
     }
 
-    pub fn random_2048() -> Result<Self> {
-        Authenticator::random(2048)
+    pub fn get(path: &str) -> Result<Self> {
+        Authenticator::try_load(path).or_else(|_| {
+            let auth = Authenticator::random(SIZE)?;
+            auth.save(path)?;
+            Ok(auth)
+        })
+    }
+
+    pub fn try_load(path: &str) -> Result<Self> {
+        let private_key = DecodePrivateKey::read_pkcs8_pem_file(path)?;
+        Ok(Authenticator::new(private_key))
+    }
+
+    pub fn save(&self, path: &str) -> Result<()> {
+        Ok(self.private_key.write_pkcs8_pem_file(path, LineEnding::CRLF)?)
     }
 
     // Accessors
@@ -63,7 +80,7 @@ mod tests {
 
     #[test]
     fn test_signature() {
-        let auth = Authenticator::random_2048().unwrap();
+        let auth = Authenticator::get("secret_key.pem").unwrap();
         let signature = auth.sign("Hello Sarus !");
         println!("{signature}");
         auth.verify("Hello Sarus !", &signature).expect("OK");

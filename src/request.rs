@@ -294,7 +294,7 @@ mod tests {
 
     #[test]
     fn test_dp_compile() {
-        let auth = Authenticator::random_2048().unwrap();
+        let auth = Authenticator::get("secret_key.pem").unwrap();
         let request_str = r#"
 {"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001,"epsilon_tau_thresholding":1.0,"delta_tau_thresholding":0.00001}
 "#;

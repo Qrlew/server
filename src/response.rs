@@ -1,4 +1,3 @@
-use std::{sync::Arc, ops::Deref};
 use serde::{Deserialize, Serialize};
 use crate::{auth, Error};
 
@@ -48,7 +47,7 @@ mod tests {
     #[test]
     fn test_response() {
         let response = Response::new("Hello Sarus !".to_string());
-        let signed_response = Response::signed("Hello Sarus !".to_string(), &auth::Authenticator::random_2048().unwrap());
+        let signed_response = Response::signed("Hello Sarus !".to_string(), &auth::Authenticator::get("secret_key.pem").unwrap());
         println!("{:?}", signed_response);
     }
 }

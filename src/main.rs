@@ -110,6 +110,12 @@ impl From<rsa::pkcs8::spki::Error> for Error {
     }
 }
 
+impl From<rsa::pkcs8::Error> for Error {
+    fn from(err: rsa::pkcs8::Error) -> Self {
+        Error::other(err)
+    }
+}
+
 pub type Result<T> = result::Result<T, Error>;
 
 /// A global shared Authenticator
@@ -117,7 +123,7 @@ static AUTH: OnceLock<Authenticator> = OnceLock::new();
 
 /// A function used to count named objects
 fn auth() -> &'static Authenticator {
-    AUTH.get_or_init(|| Authenticator::random_2048().unwrap())
+    AUTH.get_or_init(|| Authenticator::get("secret_key.pem").unwrap())
 }
 
 async fn verify(extract::Json(response): extract::Json<Response>) -> Result<String> {
