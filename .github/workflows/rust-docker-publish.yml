@@ -91,7 +91,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            SECRET_KEY:"${{ secrets.QRLEW_SERVER_KEY }}"
+            SECRET_KEY="${{ secrets.QRLEW_SERVER_KEY }}"
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
