@@ -173,6 +173,7 @@ mod tests {
             dark_mode: true,
         };
 
+        println!("{}", serde_json::to_string_pretty(&request).unwrap());
         println!("{}", serde_json::to_string(&request).unwrap());
     }
 
@@ -223,6 +224,7 @@ mod tests {
             ],
         };
 
+        println!("{}", serde_json::to_string_pretty(&request).unwrap());
         println!("{}", serde_json::to_string(&request).unwrap());
     }
 
@@ -277,6 +279,7 @@ mod tests {
             delta_tau_thresholding: 1e-5,
         };
 
+        println!("{}", serde_json::to_string_pretty(&request).unwrap());
         println!("{}", serde_json::to_string(&request).unwrap());
     }
 
