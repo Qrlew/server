@@ -46,8 +46,9 @@ mod tests {
 
     #[test]
     fn test_response() {
-        let response = Response::new("Hello Sarus !".to_string());
-        let signed_response = Response::signed("Hello Sarus !".to_string(), &auth::Authenticator::get("secret_key.pem").unwrap());
+        let response = Response::new("Hello\nSarus !".to_string());
+        let signed_response = Response::signed("Hello\nSarus !".to_string(), &auth::Authenticator::get("secret_key.pem").unwrap());
         println!("{:?}", signed_response);
+        println!("{}", signed_response.value());
     }
 }

@@ -188,7 +188,8 @@ mod tests {
     fn test_dot() {
         let request_str = r#"{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}"#;
         let request: Dot = serde_json::from_str(&request_str).unwrap();
-        println!("{:?}", request.response().unwrap());
+        // println!("{:?}", request.response().unwrap());
+        println!("{}", request.response().unwrap().value());
     }
 
     #[test]
