@@ -7,8 +7,8 @@ use rsa::{
     signature::{Keypair, RandomizedSigner, SignatureEncoding, Verifier},
     sha2::Sha256,
     pkcs8::{EncodePrivateKey, DecodePrivateKey, spki::der::pem::LineEnding},
-
 };
+use log::{info, warn};
 
 const SIZE: usize = 2048;
 
@@ -33,8 +33,9 @@ impl Authenticator {
     }
 
     pub fn get(path: &str) -> Result<Self> {
-        Authenticator::try_load(path).or_else(|_| {
+        Authenticator::try_load(path).or_else(|err| {
             let auth = Authenticator::random(SIZE)?;
+            warn!("Cannot load private key: {}", err);
             auth.save(path)?;
             Ok(auth)
         })
