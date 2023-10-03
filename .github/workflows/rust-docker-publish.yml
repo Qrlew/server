@@ -34,7 +34,7 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
   
-  build-docker:
+  deploy-docker:
     
     needs: build-rust
     runs-on: ubuntu-latest
