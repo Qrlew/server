@@ -8,7 +8,7 @@ RUN \
   /bin/bash -c \
   'cargo build --locked --release --package qrlew-server && \
   cp ./target/release/qrlew-server /app && \
-  echo ${SECRET_KEY} > /app/secret_key.pem'
+  echo "${SECRET_KEY}" > /app/secret_key.pem'
 
 FROM debian:stable-slim AS final
 RUN adduser \
