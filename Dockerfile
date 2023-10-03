@@ -21,7 +21,7 @@ RUN adduser \
   appuser
 COPY --from=builder /app/qrlew-server /usr/local/bin
 RUN chown appuser /usr/local/bin/qrlew-server
-COPY --from=builder /app/secret_key.pem /opt/qrlew-server
+COPY --from=builder /app/secret_key.pem /opt/qrlew-server/secret_key.pem
 RUN chown appuser /opt/qrlew-server/secret_key.pem
 USER appuser
 WORKDIR /opt/qrlew-server
