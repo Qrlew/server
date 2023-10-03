@@ -14,6 +14,8 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use tower_http::trace::{self, TraceLayer};
+use tracing::Level;
 use serde_json;
 use qrlew::differential_privacy;
 
@@ -148,6 +150,12 @@ async fn dp_compile(extract::Json(dp_compile_request): extract::Json<request::DP
 
 #[tokio::main]
 async fn main() {
+    // Setup tracing
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .compact()
+        .init();
+
     // build our application with a single route
     let app = Router::new()
         .route("/", get(|| async { format!("This is Qrlew server {}", env!("CARGO_PKG_VERSION"))}))
@@ -155,9 +163,20 @@ async fn main() {
         .route("/verify", post(verify))
         .route("/dot", post(dot))
         .route("/protect", post(protect))
-        .route("/dp_compile", post(dp_compile)); 
+        .route("/dp_compile", post(dp_compile))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(trace::DefaultMakeSpan::new()
+                    .level(Level::INFO))
+                .on_response(trace::DefaultOnResponse::new()
+                    .level(Level::INFO)),
+                );
+    
+    // load authenticator
+    auth();
 
     // run it with hyper on localhost:3000
+    tracing::info!("listening on 0.0.0.0:3000");
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
         .serve(app.into_make_service())
         .await

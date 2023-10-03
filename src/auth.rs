@@ -1,4 +1,5 @@
 use super::{Error, Result};
+use tracing::info;
 use rand;
 use base64::{Engine as _, engine::general_purpose};
 use rsa::{
@@ -8,7 +9,6 @@ use rsa::{
     sha2::Sha256,
     pkcs8::{EncodePrivateKey, DecodePrivateKey, spki::der::pem::LineEnding},
 };
-use log::{info, warn};
 
 const SIZE: usize = 2048;
 
@@ -35,7 +35,7 @@ impl Authenticator {
     pub fn get(path: &str) -> Result<Self> {
         Authenticator::try_load(path).or_else(|err| {
             let auth = Authenticator::random(SIZE)?;
-            warn!("Cannot load private key: {}", err);
+            info!("Cannot load private key: {}", err);
             auth.save(path)?;
             Ok(auth)
         })
@@ -43,6 +43,7 @@ impl Authenticator {
 
     pub fn try_load(path: &str) -> Result<Self> {
         let private_key = DecodePrivateKey::read_pkcs8_pem_file(path)?;
+        info!("Loading private key from {path}");
         Ok(Authenticator::new(private_key))
     }
 
