@@ -138,7 +138,7 @@ jobs:
 
       - name: Build and Push Container
         run: |
-          docker build -t "${{ env.GCP_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ env.GCP_IMAGE }}:${{ github.sha }}" ./
+          docker build -t "${{ env.GCP_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ env.GCP_IMAGE }}:${{ github.sha }}" --build-arg SECRET_KEY=${{ secrets.QRLEW_SERVER_KEY }} ./
           docker push "${{ env.GCP_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_REPOSITORY }}/${{ env.GCP_IMAGE }}:${{ github.sha }}"
 
       # END - Docker auth and build
