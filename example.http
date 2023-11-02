@@ -7,128 +7,28 @@ GET https://qrlew-zsyaspsckq-od.a.run.app/public_key HTTP/1.2
 POST https://qrlew-zsyaspsckq-od.a.run.app/dot HTTP/1.2
 content-type: application/json
 
-{
-  "dataset": {
-    "tables": [
-      {
-        "name": "table_1",
-        "path": [
-          "schema",
-          "table_1"
-        ],
-        "schema": {
-          "fields": [
-            {
-              "name": "a",
-              "data_type": "Float"
-            },
-            {
-              "name": "b",
-              "data_type": "Integer"
-            }
-          ]
-        },
-        "size": 10000
-      }
-    ]
-  },
-  "query": "SELECT * FROM table_1",
-  "dark_mode": true
-}
+{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}
 
-### Get the dp version of the relation
-POST https://qrlew-zsyaspsckq-od.a.run.app/dp_compile HTTP/1.2
+### Get the pep version of the relation
+POST https://qrlew-zsyaspsckq-od.a.run.app/rewrite_as_protected_entity_preserving HTTP/1.2
 content-type: application/json
 
-{
-  "dataset": {
-    "tables": [
-      {
-        "name": "user_table",
-        "path": [
-          "schema",
-          "user_table"
-        ],
-        "schema": {
-          "fields": [
-            {
-              "name": "id",
-              "data_type": "Integer"
-            },
-            {
-              "name": "name",
-              "data_type": "Text"
-            },
-            {
-              "name": "age",
-              "data_type": "Integer"
-            },
-            {
-              "name": "weight",
-              "data_type": "Float"
-            }
-          ]
-        },
-        "size": 10000
-      },
-      {
-        "name": "action_table",
-        "path": [
-          "schema",
-          "action_table"
-        ],
-        "schema": {
-          "fields": [
-            {
-              "name": "action",
-              "data_type": "Text"
-            },
-            {
-              "name": "user_id",
-              "data_type": "Integer"
-            },
-            {
-              "name": "duration",
-              "data_type": "Float"
-            }
-          ]
-        },
-        "size": 10000
-      }
-    ]
-  },
-  "query": "SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24",
-  "protected_entity": [
-    [
-      "user_table",
-      [],
-      "id"
-    ],
-    [
-      "action_table",
-      [
-        [
-          "user_id",
-          "user_table",
-          "id"
-        ]
-      ],
-      "id"
-    ]
-  ],
-  "epsilon": 1.0,
-  "delta": 0.00001,
-  "epsilon_tau_thresholding": 1.0,
-  "delta_tau_thresholding": 0.00001
-}
+{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}
+
+### Get the dp version of the relation
+POST https://qrlew-zsyaspsckq-od.a.run.app/rewrite_with_differential_privacy HTTP/1.2
+content-type: application/json
+
+{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}
+
 
 ### Verify the dp version of the relation
 POST https://qrlew-zsyaspsckq-od.a.run.app/verify HTTP/1.2
 content-type: application/json
 
 {
-  "value": "WITH join_sgtn (field_lehu, field_g31_, field_5z2s, field_xsv3, field_vhu6, field_cgi2, field_i0go) AS (SELECT * FROM schema.user_table AS user_table JOIN schema.action_table AS action_table ON (action_table.user_id) = (user_table.id)), _PROTECTED_action_table (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, action, user_id, duration) AS (SELECT md5(CAST(field_lehu AS VARCHAR)) AS _PROTECTED_ENTITY_ID_, 1 AS _PROTECTED_ENTITY_WEIGHT_, field_vhu6 AS action, field_cgi2 AS user_id, field_i0go AS duration FROM join_sgtn), map_kzp0 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, duration AS field_8mze FROM _PROTECTED_action_table WHERE ((duration) > (0)) AND ((duration) < (24))), map_25wv (field_b_lu, field_6zur) AS (SELECT field_8mze AS field_b_lu, _PROTECTED_ENTITY_ID_ AS field_6zur FROM map_kzp0), map_ioza (field__lvx, field_ifx6) AS (SELECT field_b_lu AS field__lvx, field_6zur AS field_ifx6 FROM map_25wv), reduce_nhhg (field_6zur, field_b_lu) AS (SELECT field_ifx6 AS field_6zur, sum(field__lvx) AS field_b_lu FROM map_ioza GROUP BY field_ifx6), map_d08x (field_6zur, field_b_lu) AS (SELECT field_6zur AS field_6zur, pow(field_b_lu, 2) AS field_b_lu FROM reduce_nhhg), map_933q (field__lvx, field_ifx6) AS (SELECT field_b_lu AS field__lvx, field_6zur AS field_ifx6 FROM map_d08x), reduce_ci7j (field_6zur, field_b_lu) AS (SELECT field_ifx6 AS field_6zur, sum(field__lvx) AS field_b_lu FROM map_933q GROUP BY field_ifx6), map_b_ik (field_6zur, field_b_lu) AS (SELECT field_6zur AS field_6zur, (1) / ((greatest(1, (sqrt(field_b_lu)) / ((24))))) AS field_b_lu FROM reduce_ci7j), join_2ou_ (field_b_lu, field_6zur, _SCALE_FACTOR_field_6zur, _SCALE_FACTOR_field_b_lu) AS (SELECT * FROM map_25wv JOIN map_b_ik ON (map_25wv.field_6zur) = (map_b_ik.field_6zur)), map_j3_6 (field_b_lu, field_6zur, _SCALE_FACTOR_field_6zur, _SCALE_FACTOR_field_b_lu) AS (SELECT (field_b_lu) * ((_SCALE_FACTOR_field_b_lu)) AS field_b_lu, field_6zur AS field_6zur, _SCALE_FACTOR_field_6zur AS _SCALE_FACTOR_field_6zur, _SCALE_FACTOR_field_b_lu AS _SCALE_FACTOR_field_b_lu FROM join_2ou_), map_0wqs (field__lvx) AS (SELECT field_b_lu AS field__lvx FROM map_j3_6), reduce_yf4d (field_b_lu) AS (SELECT sum(field__lvx) AS field_b_lu FROM map_0wqs), map_d0x3 (_SUM_field_8mze) AS (SELECT (field_b_lu) + ((5070.122001628459) * (((sqrt((-2) * ((ln(random()))))) * ((cos((6.283185307179586) * ((random())))))))) AS _SUM_field_8mze FROM reduce_yf4d), map_ew1r (field_zq_o) AS (SELECT _SUM_field_8mze AS field_zq_o FROM map_d0x3) SELECT * FROM map_ew1r",
-  "signature": "fgyNG9U8BivZxAHd55iz2Hx6GZWshKnAxPIINNHHv2FkSoSnlNS5tvrnFL88S5ag+Ex8OMXzFqN0nU0TxmBgJo0sCPCb8C9lGMl2EuOOfBN3tMBSUlXOLzT9bD0LyFh9ZVdEFwA4gaOute3JLBYGA7mmG4Xz4voit1ZVn5Tr+D4q8i/hBTKc1YSu5pVWJZ+zr+eySEqtZdaYz8NJYl1zPJ8K4YEwAJXai9/DfgXcY6zdL18HaOq9/ZKjK56zqVmpUjjBFmtSBLI6bJfvXrNWyVo5J6ANASvdli63wKNDCKJ2AtheQ5Oy8ZO61w5bddj2g7/5d0AhvBaELDOXnwZEvA"
+  "value": "WITH join_8sh3 (field_p7b0, field_sjgm, field_bhim, field_0lza, field_hbhz, field_vyw9, field_4wsv) AS (SELECT * FROM schema.user_table AS _LEFT_ JOIN schema.action_table AS _RIGHT_ ON (_RIGHT_.user_id) = (_LEFT_.id)), map_phke (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, action, user_id, duration) AS (SELECT md5(CAST(field_p7b0 AS VARCHAR)) AS _PROTECTED_ENTITY_ID_, 1 AS _PROTECTED_ENTITY_WEIGHT_, field_hbhz AS action, field_vyw9 AS user_id, field_4wsv AS duration FROM join_8sh3), map_kzp0 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, duration AS field_8mze FROM map_phke WHERE ((duration) > (0)) AND ((duration) < (24))), map_vb83 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, field_8mze AS field_8mze FROM map_kzp0), map_jpue (field_b_lu, field_6zur) AS (SELECT field_8mze AS field_b_lu, _PROTECTED_ENTITY_ID_ AS field_6zur FROM map_vb83), reduce_ri5s (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT field_6zur AS _PROTECTED_ENTITY_ID_, sum(field_b_lu) AS field_8mze FROM map_jpue GROUP BY field_6zur), map_7t04 (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, abs((field_8mze) * ((field_8mze))) AS field_8mze FROM reduce_ri5s), map_tgvp (field_b_lu, field_6zur) AS (SELECT field_8mze AS field_b_lu, _PROTECTED_ENTITY_ID_ AS field_6zur FROM map_7t04), reduce_d_vq (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT field_6zur AS _PROTECTED_ENTITY_ID_, sum(field_b_lu) AS field_8mze FROM map_tgvp GROUP BY field_6zur), map_dyq9 (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, (1) / ((greatest(1, (sqrt(field_8mze)) / ((24))))) AS field_8mze FROM reduce_d_vq), join_wd2i (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze, _SCALE_FACTOR__PROTECTED_ENTITY_ID_, _SCALE_FACTOR_field_8mze) AS (SELECT * FROM map_vb83 AS _LEFT_ JOIN map_dyq9 AS _RIGHT_ ON (_LEFT_._PROTECTED_ENTITY_ID_) = (_RIGHT_._PROTECTED_ENTITY_ID_)), map_07e6 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze, _SCALE_FACTOR__PROTECTED_ENTITY_ID_, _SCALE_FACTOR_field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, (field_8mze) * ((_SCALE_FACTOR_field_8mze)) AS field_8mze, _SCALE_FACTOR__PROTECTED_ENTITY_ID_ AS _SCALE_FACTOR__PROTECTED_ENTITY_ID_, _SCALE_FACTOR_field_8mze AS _SCALE_FACTOR_field_8mze FROM join_wd2i), map__ivg (field_b_lu) AS (SELECT field_8mze AS field_b_lu FROM map_07e6), reduce_xmbc (field_8mze) AS (SELECT sum(field_b_lu) AS field_8mze FROM map__ivg), map_nmqi (_SUM_field_8mze) AS (SELECT least(2400000000, greatest(0, (field_8mze) + ((239.31951076972163) * (((sqrt((-2) * ((ln(random()))))) * ((cos((6.283185307179586) * ((random())))))))))) AS _SUM_field_8mze FROM reduce_xmbc), map_2u6g (field_nnl2) AS (SELECT _SUM_field_8mze AS field_nnl2 FROM map_nmqi) SELECT * FROM map_2u6g",
+  "signature": "SBUJbslAMswREXP90hdoB2TxgyETnBDZ0FXMcKJtv5YKlBOhyG9+z1nAS6ewmoiD8fl+4GZZV9W7YwNWVh6bxEsM8ThSGeddX2Jh/blVGWgn8+vmn1et98dKVX/Bmg/4PKGOmOx9xGCEQEgclx2cdineIVppwXetHFLGMmmcJ28AFS+JUQqlmnQ6LqqqR8VrL68et8QmQasnBQOkW+gYIa+7XTl05BEiMI+WH4Cn/CNfPnpOygudkp1yFXP5YtbO3X5zo3TzDGltbg1yApVJouYGwqVCbSQTLQj1tjJlE6MIVHrt0Yg172qi0jC+6SZtxlWbQn/mDhN9s91tiB8BOA"
 }
 
 ### Verify the dp version of the relation (altered request)
@@ -136,8 +36,8 @@ POST https://qrlew-zsyaspsckq-od.a.run.app/verify HTTP/1.2
 content-type: application/json
 
 {
-  "value": "WITH Join_sgtn (field_lehu, field_g31_, field_5z2s, field_xsv3, field_vhu6, field_cgi2, field_i0go) AS (SELECT * FROM schema.user_table AS user_table JOIN schema.action_table AS action_table ON (action_table.user_id) = (user_table.id)), _PROTECTED_action_table (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, action, user_id, duration) AS (SELECT md5(CAST(field_lehu AS VARCHAR)) AS _PROTECTED_ENTITY_ID_, 1 AS _PROTECTED_ENTITY_WEIGHT_, field_vhu6 AS action, field_cgi2 AS user_id, field_i0go AS duration FROM join_sgtn), map_kzp0 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, duration AS field_8mze FROM _PROTECTED_action_table WHERE ((duration) > (0)) AND ((duration) < (24))), map_25wv (field_b_lu, field_6zur) AS (SELECT field_8mze AS field_b_lu, _PROTECTED_ENTITY_ID_ AS field_6zur FROM map_kzp0), map_ioza (field__lvx, field_ifx6) AS (SELECT field_b_lu AS field__lvx, field_6zur AS field_ifx6 FROM map_25wv), reduce_nhhg (field_6zur, field_b_lu) AS (SELECT field_ifx6 AS field_6zur, sum(field__lvx) AS field_b_lu FROM map_ioza GROUP BY field_ifx6), map_d08x (field_6zur, field_b_lu) AS (SELECT field_6zur AS field_6zur, pow(field_b_lu, 2) AS field_b_lu FROM reduce_nhhg), map_933q (field__lvx, field_ifx6) AS (SELECT field_b_lu AS field__lvx, field_6zur AS field_ifx6 FROM map_d08x), reduce_ci7j (field_6zur, field_b_lu) AS (SELECT field_ifx6 AS field_6zur, sum(field__lvx) AS field_b_lu FROM map_933q GROUP BY field_ifx6), map_b_ik (field_6zur, field_b_lu) AS (SELECT field_6zur AS field_6zur, (1) / ((greatest(1, (sqrt(field_b_lu)) / ((24))))) AS field_b_lu FROM reduce_ci7j), join_2ou_ (field_b_lu, field_6zur, _SCALE_FACTOR_field_6zur, _SCALE_FACTOR_field_b_lu) AS (SELECT * FROM map_25wv JOIN map_b_ik ON (map_25wv.field_6zur) = (map_b_ik.field_6zur)), map_j3_6 (field_b_lu, field_6zur, _SCALE_FACTOR_field_6zur, _SCALE_FACTOR_field_b_lu) AS (SELECT (field_b_lu) * ((_SCALE_FACTOR_field_b_lu)) AS field_b_lu, field_6zur AS field_6zur, _SCALE_FACTOR_field_6zur AS _SCALE_FACTOR_field_6zur, _SCALE_FACTOR_field_b_lu AS _SCALE_FACTOR_field_b_lu FROM join_2ou_), map_0wqs (field__lvx) AS (SELECT field_b_lu AS field__lvx FROM map_j3_6), reduce_yf4d (field_b_lu) AS (SELECT sum(field__lvx) AS field_b_lu FROM map_0wqs), map_d0x3 (_SUM_field_8mze) AS (SELECT (field_b_lu) + ((5070.122001628459) * (((sqrt((-2) * ((ln(random()))))) * ((cos((6.283185307179586) * ((random())))))))) AS _SUM_field_8mze FROM reduce_yf4d), map_ew1r (field_zq_o) AS (SELECT _SUM_field_8mze AS field_zq_o FROM map_d0x3) SELECT * FROM map_ew1r",
-  "signature": "fgyNG9U8BivZxAHd55iz2Hx6GZWshKnAxPIINNHHv2FkSoSnlNS5tvrnFL88S5ag+Ex8OMXzFqN0nU0TxmBgJo0sCPCb8C9lGMl2EuOOfBN3tMBSUlXOLzT9bD0LyFh9ZVdEFwA4gaOute3JLBYGA7mmG4Xz4voit1ZVn5Tr+D4q8i/hBTKc1YSu5pVWJZ+zr+eySEqtZdaYz8NJYl1zPJ8K4YEwAJXai9/DfgXcY6zdL18HaOq9/ZKjK56zqVmpUjjBFmtSBLI6bJfvXrNWyVo5J6ANASvdli63wKNDCKJ2AtheQ5Oy8ZO61w5bddj2g7/5d0AhvBaELDOXnwZEvA"
+  "value": "WITH _join_8sh3 (field_p7b0, field_sjgm, field_bhim, field_0lza, field_hbhz, field_vyw9, field_4wsv) AS (SELECT * FROM schema.user_table AS _LEFT_ JOIN schema.action_table AS _RIGHT_ ON (_RIGHT_.user_id) = (_LEFT_.id)), map_phke (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, action, user_id, duration) AS (SELECT md5(CAST(field_p7b0 AS VARCHAR)) AS _PROTECTED_ENTITY_ID_, 1 AS _PROTECTED_ENTITY_WEIGHT_, field_hbhz AS action, field_vyw9 AS user_id, field_4wsv AS duration FROM join_8sh3), map_kzp0 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, duration AS field_8mze FROM map_phke WHERE ((duration) > (0)) AND ((duration) < (24))), map_vb83 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, field_8mze AS field_8mze FROM map_kzp0), map_jpue (field_b_lu, field_6zur) AS (SELECT field_8mze AS field_b_lu, _PROTECTED_ENTITY_ID_ AS field_6zur FROM map_vb83), reduce_ri5s (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT field_6zur AS _PROTECTED_ENTITY_ID_, sum(field_b_lu) AS field_8mze FROM map_jpue GROUP BY field_6zur), map_7t04 (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, abs((field_8mze) * ((field_8mze))) AS field_8mze FROM reduce_ri5s), map_tgvp (field_b_lu, field_6zur) AS (SELECT field_8mze AS field_b_lu, _PROTECTED_ENTITY_ID_ AS field_6zur FROM map_7t04), reduce_d_vq (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT field_6zur AS _PROTECTED_ENTITY_ID_, sum(field_b_lu) AS field_8mze FROM map_tgvp GROUP BY field_6zur), map_dyq9 (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, (1) / ((greatest(1, (sqrt(field_8mze)) / ((24))))) AS field_8mze FROM reduce_d_vq), join_wd2i (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze, _SCALE_FACTOR__PROTECTED_ENTITY_ID_, _SCALE_FACTOR_field_8mze) AS (SELECT * FROM map_vb83 AS _LEFT_ JOIN map_dyq9 AS _RIGHT_ ON (_LEFT_._PROTECTED_ENTITY_ID_) = (_RIGHT_._PROTECTED_ENTITY_ID_)), map_07e6 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze, _SCALE_FACTOR__PROTECTED_ENTITY_ID_, _SCALE_FACTOR_field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, (field_8mze) * ((_SCALE_FACTOR_field_8mze)) AS field_8mze, _SCALE_FACTOR__PROTECTED_ENTITY_ID_ AS _SCALE_FACTOR__PROTECTED_ENTITY_ID_, _SCALE_FACTOR_field_8mze AS _SCALE_FACTOR_field_8mze FROM join_wd2i), map__ivg (field_b_lu) AS (SELECT field_8mze AS field_b_lu FROM map_07e6), reduce_xmbc (field_8mze) AS (SELECT sum(field_b_lu) AS field_8mze FROM map__ivg), map_nmqi (_SUM_field_8mze) AS (SELECT least(2400000000, greatest(0, (field_8mze) + ((239.31951076972163) * (((sqrt((-2) * ((ln(random()))))) * ((cos((6.283185307179586) * ((random())))))))))) AS _SUM_field_8mze FROM reduce_xmbc), map_2u6g (field_nnl2) AS (SELECT _SUM_field_8mze AS field_nnl2 FROM map_nmqi) SELECT * FROM map_2u6g",
+  "signature": "SBUJbslAMswREXP90hdoB2TxgyETnBDZ0FXMcKJtv5YKlBOhyG9+z1nAS6ewmoiD8fl+4GZZV9W7YwNWVh6bxEsM8ThSGeddX2Jh/blVGWgn8+vmn1et98dKVX/Bmg/4PKGOmOx9xGCEQEgclx2cdineIVppwXetHFLGMmmcJ28AFS+JUQqlmnQ6LqqqR8VrL68et8QmQasnBQOkW+gYIa+7XTl05BEiMI+WH4Cn/CNfPnpOygudkp1yFXP5YtbO3X5zo3TzDGltbg1yApVJouYGwqVCbSQTLQj1tjJlE6MIVHrt0Yg172qi0jC+6SZtxlWbQn/mDhN9s91tiB8BOA"
 }
 
 ### Verify the dp version of the relation (altered signature)
@@ -145,6 +45,6 @@ POST https://qrlew-zsyaspsckq-od.a.run.app/verify HTTP/1.2
 content-type: application/json
 
 {
-  "value": "WITH join_sgtn (field_lehu, field_g31_, field_5z2s, field_xsv3, field_vhu6, field_cgi2, field_i0go) AS (SELECT * FROM schema.user_table AS user_table JOIN schema.action_table AS action_table ON (action_table.user_id) = (user_table.id)), _PROTECTED_action_table (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, action, user_id, duration) AS (SELECT md5(CAST(field_lehu AS VARCHAR)) AS _PROTECTED_ENTITY_ID_, 1 AS _PROTECTED_ENTITY_WEIGHT_, field_vhu6 AS action, field_cgi2 AS user_id, field_i0go AS duration FROM join_sgtn), map_kzp0 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, duration AS field_8mze FROM _PROTECTED_action_table WHERE ((duration) > (0)) AND ((duration) < (24))), map_25wv (field_b_lu, field_6zur) AS (SELECT field_8mze AS field_b_lu, _PROTECTED_ENTITY_ID_ AS field_6zur FROM map_kzp0), map_ioza (field__lvx, field_ifx6) AS (SELECT field_b_lu AS field__lvx, field_6zur AS field_ifx6 FROM map_25wv), reduce_nhhg (field_6zur, field_b_lu) AS (SELECT field_ifx6 AS field_6zur, sum(field__lvx) AS field_b_lu FROM map_ioza GROUP BY field_ifx6), map_d08x (field_6zur, field_b_lu) AS (SELECT field_6zur AS field_6zur, pow(field_b_lu, 2) AS field_b_lu FROM reduce_nhhg), map_933q (field__lvx, field_ifx6) AS (SELECT field_b_lu AS field__lvx, field_6zur AS field_ifx6 FROM map_d08x), reduce_ci7j (field_6zur, field_b_lu) AS (SELECT field_ifx6 AS field_6zur, sum(field__lvx) AS field_b_lu FROM map_933q GROUP BY field_ifx6), map_b_ik (field_6zur, field_b_lu) AS (SELECT field_6zur AS field_6zur, (1) / ((greatest(1, (sqrt(field_b_lu)) / ((24))))) AS field_b_lu FROM reduce_ci7j), join_2ou_ (field_b_lu, field_6zur, _SCALE_FACTOR_field_6zur, _SCALE_FACTOR_field_b_lu) AS (SELECT * FROM map_25wv JOIN map_b_ik ON (map_25wv.field_6zur) = (map_b_ik.field_6zur)), map_j3_6 (field_b_lu, field_6zur, _SCALE_FACTOR_field_6zur, _SCALE_FACTOR_field_b_lu) AS (SELECT (field_b_lu) * ((_SCALE_FACTOR_field_b_lu)) AS field_b_lu, field_6zur AS field_6zur, _SCALE_FACTOR_field_6zur AS _SCALE_FACTOR_field_6zur, _SCALE_FACTOR_field_b_lu AS _SCALE_FACTOR_field_b_lu FROM join_2ou_), map_0wqs (field__lvx) AS (SELECT field_b_lu AS field__lvx FROM map_j3_6), reduce_yf4d (field_b_lu) AS (SELECT sum(field__lvx) AS field_b_lu FROM map_0wqs), map_d0x3 (_SUM_field_8mze) AS (SELECT (field_b_lu) + ((5070.122001628459) * (((sqrt((-2) * ((ln(random()))))) * ((cos((6.283185307179586) * ((random())))))))) AS _SUM_field_8mze FROM reduce_yf4d), map_ew1r (field_zq_o) AS (SELECT _SUM_field_8mze AS field_zq_o FROM map_d0x3) SELECT * FROM map_ew1r",
-  "signature": "XXXfgyNG9U8BivZxAHd55iz2Hx6GZWshKnAxPIINNHHv2FkSoSnlNS5tvrnFL88S5ag+Ex8OMXzFqN0nU0TxmBgJo0sCPCb8C9lGMl2EuOOfBN3tMBSUlXOLzT9bD0LyFh9ZVdEFwA4gaOute3JLBYGA7mmG4Xz4voit1ZVn5Tr+D4q8i/hBTKc1YSu5pVWJZ+zr+eySEqtZdaYz8NJYl1zPJ8K4YEwAJXai9/DfgXcY6zdL18HaOq9/ZKjK56zqVmpUjjBFmtSBLI6bJfvXrNWyVo5J6ANASvdli63wKNDCKJ2AtheQ5Oy8ZO61w5bddj2g7/5d0AhvBaELDOXnwZEvA"
+  "value": "WITH join_8sh3 (field_p7b0, field_sjgm, field_bhim, field_0lza, field_hbhz, field_vyw9, field_4wsv) AS (SELECT * FROM schema.user_table AS _LEFT_ JOIN schema.action_table AS _RIGHT_ ON (_RIGHT_.user_id) = (_LEFT_.id)), map_phke (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, action, user_id, duration) AS (SELECT md5(CAST(field_p7b0 AS VARCHAR)) AS _PROTECTED_ENTITY_ID_, 1 AS _PROTECTED_ENTITY_WEIGHT_, field_hbhz AS action, field_vyw9 AS user_id, field_4wsv AS duration FROM join_8sh3), map_kzp0 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, duration AS field_8mze FROM map_phke WHERE ((duration) > (0)) AND ((duration) < (24))), map_vb83 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, field_8mze AS field_8mze FROM map_kzp0), map_jpue (field_b_lu, field_6zur) AS (SELECT field_8mze AS field_b_lu, _PROTECTED_ENTITY_ID_ AS field_6zur FROM map_vb83), reduce_ri5s (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT field_6zur AS _PROTECTED_ENTITY_ID_, sum(field_b_lu) AS field_8mze FROM map_jpue GROUP BY field_6zur), map_7t04 (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, abs((field_8mze) * ((field_8mze))) AS field_8mze FROM reduce_ri5s), map_tgvp (field_b_lu, field_6zur) AS (SELECT field_8mze AS field_b_lu, _PROTECTED_ENTITY_ID_ AS field_6zur FROM map_7t04), reduce_d_vq (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT field_6zur AS _PROTECTED_ENTITY_ID_, sum(field_b_lu) AS field_8mze FROM map_tgvp GROUP BY field_6zur), map_dyq9 (_PROTECTED_ENTITY_ID_, field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, (1) / ((greatest(1, (sqrt(field_8mze)) / ((24))))) AS field_8mze FROM reduce_d_vq), join_wd2i (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze, _SCALE_FACTOR__PROTECTED_ENTITY_ID_, _SCALE_FACTOR_field_8mze) AS (SELECT * FROM map_vb83 AS _LEFT_ JOIN map_dyq9 AS _RIGHT_ ON (_LEFT_._PROTECTED_ENTITY_ID_) = (_RIGHT_._PROTECTED_ENTITY_ID_)), map_07e6 (_PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_, field_8mze, _SCALE_FACTOR__PROTECTED_ENTITY_ID_, _SCALE_FACTOR_field_8mze) AS (SELECT _PROTECTED_ENTITY_ID_ AS _PROTECTED_ENTITY_ID_, _PROTECTED_ENTITY_WEIGHT_ AS _PROTECTED_ENTITY_WEIGHT_, (field_8mze) * ((_SCALE_FACTOR_field_8mze)) AS field_8mze, _SCALE_FACTOR__PROTECTED_ENTITY_ID_ AS _SCALE_FACTOR__PROTECTED_ENTITY_ID_, _SCALE_FACTOR_field_8mze AS _SCALE_FACTOR_field_8mze FROM join_wd2i), map__ivg (field_b_lu) AS (SELECT field_8mze AS field_b_lu FROM map_07e6), reduce_xmbc (field_8mze) AS (SELECT sum(field_b_lu) AS field_8mze FROM map__ivg), map_nmqi (_SUM_field_8mze) AS (SELECT least(2400000000, greatest(0, (field_8mze) + ((239.31951076972163) * (((sqrt((-2) * ((ln(random()))))) * ((cos((6.283185307179586) * ((random())))))))))) AS _SUM_field_8mze FROM reduce_xmbc), map_2u6g (field_nnl2) AS (SELECT _SUM_field_8mze AS field_nnl2 FROM map_nmqi) SELECT * FROM map_2u6g",
+  "signature": "_SBUJbslAMswREXP90hdoB2TxgyETnBDZ0FXMcKJtv5YKlBOhyG9+z1nAS6ewmoiD8fl+4GZZV9W7YwNWVh6bxEsM8ThSGeddX2Jh/blVGWgn8+vmn1et98dKVX/Bmg/4PKGOmOx9xGCEQEgclx2cdineIVppwXetHFLGMmmcJ28AFS+JUQqlmnQ6LqqqR8VrL68et8QmQasnBQOkW+gYIa+7XTl05BEiMI+WH4Cn/CNfPnpOygudkp1yFXP5YtbO3X5zo3TzDGltbg1yApVJouYGwqVCbSQTLQj1tjJlE6MIVHrt0Yg172qi0jC+6SZtxlWbQn/mDhN9s91tiB8BOA"
 }
