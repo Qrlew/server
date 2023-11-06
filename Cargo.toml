@@ -17,7 +17,7 @@ keywords = ["sql", "data", "web", "http"]
 qrlew = "0.4.6"
 axum = "0.6"
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
-tower-http = { version = "0.4.0", features = ["trace"] }
+tower-http = { version = "0.4.0", features = ["cors", "trace"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = { version = "1.0", features = ["derive", "rc"] }

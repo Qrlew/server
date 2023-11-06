@@ -14,7 +14,10 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use tower_http::trace::{self, TraceLayer};
+use tower_http::{
+    trace::{self, TraceLayer},
+    cors::CorsLayer,
+};
 use tracing::Level;
 use serde_json;
 use qrlew::{differential_privacy, rewriting};
@@ -181,7 +184,10 @@ async fn main() {
                     .level(Level::INFO))
                 .on_response(trace::DefaultOnResponse::new()
                     .level(Level::INFO)),
-                );
+                )
+        .layer(
+            CorsLayer::permissive()
+        );
     
     // load authenticator
     auth();
