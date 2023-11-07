@@ -1,6 +1,7 @@
 use std::{sync::Arc, ops::Deref};
 use serde::{Deserialize, Serialize};
-use qrlew::{self, Ready as _, Relation, With as _, ast::Query, expr::Identifier, synthetic_data::SyntheticData,
+use serde_json;
+use qrlew::{self, Ready as _, Relation, With as _, ast::{Query, self}, expr::Identifier, synthetic_data::SyntheticData,
 protection::ProtectedEntity, differential_privacy::budget::Budget};
 use super::*;
 
@@ -154,6 +155,75 @@ impl RewriteWithDifferentialPrivacy {
         let budget = Budget::new(self.epsilon, self.delta);
         let dp_relation = relation.rewrite_with_differential_privacy(&relations, synthetic_data, protected_entity, budget)?;
         Ok(Response::signed(Query::from(dp_relation.relation()).to_string(), auth))
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+pub struct QueryWithDot {
+    query: String,
+    dot: String,
+}
+
+impl QueryWithDot {
+    pub fn new(query: String, dot: String) -> QueryWithDot {
+        QueryWithDot {
+            query,
+            dot,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+pub struct RewriteAsProtectedEntityPreservingWithDot {
+    dataset: Dataset,
+    query: String,
+    synthetic_data: Vec<(String, String)>,
+    protected_entity: Vec<(String, Vec<(String, String, String)>, String)>,
+    epsilon: f64,
+    delta: f64,
+    dark_mode: bool,
+}
+
+impl RewriteAsProtectedEntityPreservingWithDot {
+    pub fn response(self) -> Result<Response> {
+        let query = qrlew::sql::relation::parse(&self.query)?;
+        let relations = self.dataset.into();
+        let relation = Relation::try_from(query.with(&relations)).unwrap();
+        let synthetic_data = SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect());
+        let borrowed_protected_entity: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.protected_entity.iter().map(|(source, links, protected_col)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), protected_col.as_str())).collect();
+        let protected_entity = ProtectedEntity::from(borrowed_protected_entity);
+        let budget = Budget::new(self.epsilon, self.delta);
+        let pep_relation = relation.rewrite_as_protected_entity_preserving(&relations, synthetic_data, protected_entity, budget)?;
+        let mut dot = Vec::new();
+        pep_relation.relation().dot(&mut dot, if self.dark_mode {&["dark"]} else {&[]})?;
+        Ok(Response::new(serde_json::to_string(&QueryWithDot::new(Query::from(pep_relation.relation()).to_string(), String::from_utf8(dot)?))?))
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+pub struct RewriteWithDifferentialPrivacyWithDot {
+    dataset: Dataset,
+    query: String,
+    synthetic_data: Vec<(String, String)>,
+    protected_entity: Vec<(String, Vec<(String, String, String)>, String)>,
+    epsilon: f64,
+    delta: f64,
+    dark_mode: bool,
+}
+
+impl RewriteWithDifferentialPrivacyWithDot {
+    pub fn response(self, auth: &Authenticator) -> Result<Response> {
+        let query = qrlew::sql::relation::parse(&self.query)?;
+        let relations = self.dataset.into();
+        let relation = Relation::try_from(query.with(&relations)).unwrap();
+        let synthetic_data = SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect());
+        let borrowed_protected_entity: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.protected_entity.iter().map(|(source, links, protected_col)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), protected_col.as_str())).collect();
+        let protected_entity = ProtectedEntity::from(borrowed_protected_entity);
+        let budget = Budget::new(self.epsilon, self.delta);
+        let dp_relation = relation.rewrite_with_differential_privacy(&relations, synthetic_data, protected_entity, budget)?;
+        let mut dot = Vec::new();
+        dp_relation.relation().dot(&mut dot, if self.dark_mode {&["dark"]} else {&[]})?;
+        Ok(Response::signed(serde_json::to_string(&QueryWithDot::new(Query::from(dp_relation.relation()).to_string(), String::from_utf8(dot)?))?, auth))
     }
 }
 

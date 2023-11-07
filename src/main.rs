@@ -158,8 +158,16 @@ async fn rewrite_as_protected_entity_preserving(extract::Json(rewrite_as_protect
     rewrite_as_protected_entity_preserving_request.response()
 }
 
-async fn rewrite_with_differential_privacy(extract::Json(rewrite_with_differential_privacy_request): extract::Json<request::RewriteWithDifferentialPrivacy>) -> Result<Response> {
+async fn rewrite_with_differential_privacy(extract::Json(rewrite_with_differential_privacy_request): extract::Json<request::RewriteWithDifferentialPrivacyWithDot>) -> Result<Response> {
     rewrite_with_differential_privacy_request.response(auth())
+}
+
+async fn rewrite_as_protected_entity_preserving_with_dot(extract::Json(rewrite_as_protected_entity_preserving_request_with_dot): extract::Json<request::RewriteAsProtectedEntityPreserving>) -> Result<Response> {
+    rewrite_as_protected_entity_preserving_request_with_dot.response()
+}
+
+async fn rewrite_with_differential_privacy_with_dot(extract::Json(rewrite_with_differential_privacy_request_with_dot): extract::Json<request::RewriteWithDifferentialPrivacyWithDot>) -> Result<Response> {
+    rewrite_with_differential_privacy_request_with_dot.response(auth())
 }
 
 #[tokio::main]
@@ -178,6 +186,8 @@ async fn main() {
         .route("/dot", post(dot))
         .route("/rewrite_as_protected_entity_preserving", post(rewrite_as_protected_entity_preserving))
         .route("/rewrite_with_differential_privacy", post(rewrite_with_differential_privacy))
+        .route("/rewrite_as_protected_entity_preserving_with_dot", post(rewrite_as_protected_entity_preserving_with_dot))
+        .route("/rewrite_with_differential_privacy_with_dot", post(rewrite_with_differential_privacy_with_dot))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(trace::DefaultMakeSpan::new()
