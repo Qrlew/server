@@ -37,16 +37,31 @@ impl From<DataType> for qrlew::DataType {
     }
 }
 
+/// Simplified Constraint
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+enum Constraint {
+    Unique,
+}
+
+impl From<Constraint> for qrlew::relation::Constraint {
+    fn from(value: Constraint) -> Self {
+        match value {
+            Constraint::Unique => qrlew::relation::Constraint::Unique,
+        }
+    }
+}
+
 /// Field
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
 struct Field {
     name: String,
     data_type: DataType,
+    constraint: Option<Constraint>,
 }
 
 impl From<Field> for qrlew::relation::Field {
     fn from(value: Field) -> Self {
-        qrlew::relation::Field::from_name_data_type(value.name, value.data_type)
+        qrlew::relation::Field::new(value.name, value.data_type.into(), value.constraint.map(Constraint::into))
     }
 }
 
@@ -240,8 +255,8 @@ mod tests {
                     name: "table_1".to_string(),
                     path: vec!["schema".to_string(), "table_1".to_string()],
                     schema: Schema { fields: vec![
-                        Field { name: "a".to_string(), data_type: DataType::Float },
-                        Field { name: "b".to_string(), data_type: DataType::Integer },
+                        Field { name: "a".to_string(), data_type: DataType::Float, constraint: None },
+                        Field { name: "b".to_string(), data_type: DataType::Integer, constraint: Some(Constraint::Unique) },
                     ]},
                     size: 10000 }
             ]},
@@ -276,10 +291,10 @@ mod tests {
                     name: "user_table".to_string(),
                     path: vec!["schema".to_string(), "user_table".to_string()],
                     schema: Schema { fields: vec![
-                        Field { name: "id".to_string(), data_type: DataType::Integer },
-                        Field { name: "name".to_string(), data_type: DataType::Text },
-                        Field { name: "age".to_string(), data_type: DataType::Integer },
-                        Field { name: "weight".to_string(), data_type: DataType::Float },
+                        Field { name: "id".to_string(), data_type: DataType::Integer, constraint: Some(Constraint::Unique) },
+                        Field { name: "name".to_string(), data_type: DataType::Text, constraint: None },
+                        Field { name: "age".to_string(), data_type: DataType::Integer, constraint: None },
+                        Field { name: "weight".to_string(), data_type: DataType::Float, constraint: None },
                     ]},
                     size: 10000,
                 },
@@ -287,9 +302,9 @@ mod tests {
                     name: "action_table".to_string(),
                     path: vec!["schema".to_string(), "action_table".to_string()],
                     schema: Schema { fields: vec![
-                        Field { name: "action".to_string(), data_type: DataType::Text },
-                        Field { name: "user_id".to_string(), data_type: DataType::Integer },
-                        Field { name: "duration".to_string(), data_type: DataType::Float },
+                        Field { name: "action".to_string(), data_type: DataType::Text, constraint: None },
+                        Field { name: "user_id".to_string(), data_type: DataType::Integer, constraint: None },
+                        Field { name: "duration".to_string(), data_type: DataType::Float, constraint: None },
                     ]},
                     size: 10000,
                 },
@@ -333,10 +348,10 @@ mod tests {
                     name: "user_table".to_string(),
                     path: vec!["schema".to_string(), "user_table".to_string()],
                     schema: Schema { fields: vec![
-                        Field { name: "id".to_string(), data_type: DataType::Integer },
-                        Field { name: "name".to_string(), data_type: DataType::Text },
-                        Field { name: "age".to_string(), data_type: DataType::Integer },
-                        Field { name: "weight".to_string(), data_type: DataType::Float },
+                        Field { name: "id".to_string(), data_type: DataType::Integer, constraint: Some(Constraint::Unique) },
+                        Field { name: "name".to_string(), data_type: DataType::Text, constraint: None },
+                        Field { name: "age".to_string(), data_type: DataType::Integer, constraint: None },
+                        Field { name: "weight".to_string(), data_type: DataType::Float, constraint: None },
                     ]},
                     size: 10000,
                 },
@@ -344,9 +359,9 @@ mod tests {
                     name: "action_table".to_string(),
                     path: vec!["schema".to_string(), "action_table".to_string()],
                     schema: Schema { fields: vec![
-                        Field { name: "action".to_string(), data_type: DataType::Text },
-                        Field { name: "user_id".to_string(), data_type: DataType::Integer },
-                        Field { name: "duration".to_string(), data_type: DataType::Float },
+                        Field { name: "action".to_string(), data_type: DataType::Text, constraint: None },
+                        Field { name: "user_id".to_string(), data_type: DataType::Integer, constraint: None },
+                        Field { name: "duration".to_string(), data_type: DataType::Float, constraint: None },
                     ]},
                     size: 10000,
                 },
