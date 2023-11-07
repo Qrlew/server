@@ -162,7 +162,7 @@ async fn rewrite_with_differential_privacy(extract::Json(rewrite_with_differenti
     rewrite_with_differential_privacy_request.response(auth())
 }
 
-async fn rewrite_as_protected_entity_preserving_with_dot(extract::Json(rewrite_as_protected_entity_preserving_request_with_dot): extract::Json<request::RewriteAsProtectedEntityPreserving>) -> Result<Response> {
+async fn rewrite_as_protected_entity_preserving_with_dot(extract::Json(rewrite_as_protected_entity_preserving_request_with_dot): extract::Json<request::RewriteAsProtectedEntityPreservingWithDot>) -> Result<Response> {
     rewrite_as_protected_entity_preserving_request_with_dot.response()
 }
 
