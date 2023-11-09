@@ -1,29 +1,29 @@
-GET https://qrlew-zsyaspsckq-od.a.run.app/ HTTP/1.2
+GET https://qrlew.sarus.app/ HTTP/1.2
 
 ### Check the public key
-GET https://qrlew-zsyaspsckq-od.a.run.app/public_key HTTP/1.2
+GET https://qrlew.sarus.app/public_key HTTP/1.2
 
 ### Get a dot representation of the Relation
-POST https://qrlew-zsyaspsckq-od.a.run.app/dot HTTP/1.2
+POST https://qrlew.sarus.app/dot HTTP/1.2
 content-type: application/json
 
 {"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}
 
 ### Get the pep version of the relation
-POST https://qrlew-zsyaspsckq-od.a.run.app/rewrite_as_protected_entity_preserving HTTP/1.2
+POST https://qrlew.sarus.app/rewrite_as_protected_entity_preserving HTTP/1.2
 content-type: application/json
 
 {"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}
 
 ### Get the dp version of the relation
-POST https://qrlew-zsyaspsckq-od.a.run.app/rewrite_with_differential_privacy HTTP/1.2
+POST https://qrlew.sarus.app/rewrite_with_differential_privacy HTTP/1.2
 content-type: application/json
 
 {"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}
 
 
 ### Verify the dp version of the relation
-POST https://qrlew-zsyaspsckq-od.a.run.app/verify HTTP/1.2
+POST https://qrlew.sarus.app/verify HTTP/1.2
 content-type: application/json
 
 {
@@ -32,7 +32,7 @@ content-type: application/json
 }
 
 ### Verify the dp version of the relation (altered request)
-POST https://qrlew-zsyaspsckq-od.a.run.app/verify HTTP/1.2
+POST https://qrlew.sarus.app/verify HTTP/1.2
 content-type: application/json
 
 {
@@ -41,7 +41,7 @@ content-type: application/json
 }
 
 ### Verify the dp version of the relation (altered signature)
-POST https://qrlew-zsyaspsckq-od.a.run.app/verify HTTP/1.2
+POST https://qrlew.sarus.app/verify HTTP/1.2
 content-type: application/json
 
 {
@@ -50,13 +50,13 @@ content-type: application/json
 }
 
 ### Get the pep version of the relation
-POST https://qrlew-zsyaspsckq-od.a.run.app/rewrite_as_protected_entity_preserving_with_dot HTTP/1.2
+POST https://qrlew.sarus.app/rewrite_as_protected_entity_preserving_with_dot HTTP/1.2
 content-type: application/json
 
 {"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001,"dark_mode":false}
 
 ### Get the dp version of the relation
-POST https://qrlew-zsyaspsckq-od.a.run.app/rewrite_with_differential_privacy_with_dot HTTP/1.2
+POST https://qrlew.sarus.app/rewrite_with_differential_privacy_with_dot HTTP/1.2
 content-type: application/json
 
 {"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001,"dark_mode":false}
