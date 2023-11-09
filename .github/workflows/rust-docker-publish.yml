@@ -20,7 +20,7 @@ env:
   GCP_LOCATION: europe-west4
   GCP_REPOSITORY: qrlew
   GCP_IMAGE: qrlew-server
-  GCP_SERVICE: qrlew
+  GCP_SERVICE: qrlew-server
 
 jobs:
   build-rust:
