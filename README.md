@@ -11,4 +11,4 @@ The docker image was inspired by: https://github.com/hseeberger/hello-rs/blob/ma
 
 ## A test server is running
 
-`https://qrlew-zsyaspsckq-od.a.run.app`
+`https://qrlew.sarus.app`
