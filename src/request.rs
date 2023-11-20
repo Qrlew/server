@@ -144,8 +144,8 @@ impl RewriteAsPrivacyUnitPreserving {
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
         let budget = Budget::new(self.epsilon, self.delta);
-        let pep_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, budget)?;
-        Ok(Response::new(Query::from(pep_relation.relation()).to_string()))
+        let pup_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, budget)?;
+        Ok(Response::new(Query::from(pup_relation.relation()).to_string()))
     }
 }
 
@@ -154,7 +154,7 @@ pub struct RewriteWithDifferentialPrivacy {
     dataset: Dataset,
     query: String,
     synthetic_data: Vec<(String, String)>,
-    protected_entity: Vec<(String, Vec<(String, String, String)>, String)>,
+    privacy_unit: Vec<(String, Vec<(String, String, String)>, String)>,
     epsilon: f64,
     delta: f64,
 }
@@ -165,10 +165,10 @@ impl RewriteWithDifferentialPrivacy {
         let relations = self.dataset.into();
         let relation = Relation::try_from(query.with(&relations)).unwrap();
         let synthetic_data = SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect());
-        let borrowed_protected_entity: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.protected_entity.iter().map(|(source, links, protected_col)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), protected_col.as_str())).collect();
-        let protected_entity = PrivacyUnit::from(borrowed_protected_entity);
+        let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
+        let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
         let budget = Budget::new(self.epsilon, self.delta);
-        let dp_relation = relation.rewrite_with_differential_privacy(&relations, synthetic_data, protected_entity, budget)?;
+        let dp_relation = relation.rewrite_with_differential_privacy(&relations, synthetic_data, privacy_unit, budget)?;
         Ok(Response::signed(Query::from(dp_relation.relation()).to_string(), auth))
     }
 }
@@ -193,7 +193,7 @@ pub struct RewriteAsPrivacyUnitPreservingWithDot {
     dataset: Dataset,
     query: String,
     synthetic_data: Vec<(String, String)>,
-    protected_entity: Vec<(String, Vec<(String, String, String)>, String)>,
+    privacy_unit: Vec<(String, Vec<(String, String, String)>, String)>,
     epsilon: f64,
     delta: f64,
     dark_mode: bool,
@@ -205,13 +205,13 @@ impl RewriteAsPrivacyUnitPreservingWithDot {
         let relations = self.dataset.into();
         let relation = Relation::try_from(query.with(&relations)).unwrap();
         let synthetic_data = SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect());
-        let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.protected_entity.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
+        let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
         let budget = Budget::new(self.epsilon, self.delta);
-        let pep_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, budget)?;
+        let pup_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, budget)?;
         let mut dot = Vec::new();
-        pep_relation.relation().dot(&mut dot, if self.dark_mode {&["dark"]} else {&[]})?;
-        Ok(Response::new(serde_json::to_string(&QueryWithDot::new(Query::from(pep_relation.relation()).to_string(), String::from_utf8(dot)?))?))
+        pup_relation.relation().dot(&mut dot, if self.dark_mode {&["dark"]} else {&[]})?;
+        Ok(Response::new(serde_json::to_string(&QueryWithDot::new(Query::from(pup_relation.relation()).to_string(), String::from_utf8(dot)?))?))
     }
 }
 
@@ -220,7 +220,7 @@ pub struct RewriteWithDifferentialPrivacyWithDot {
     dataset: Dataset,
     query: String,
     synthetic_data: Vec<(String, String)>,
-    protected_entity: Vec<(String, Vec<(String, String, String)>, String)>,
+    privacy_unit: Vec<(String, Vec<(String, String, String)>, String)>,
     epsilon: f64,
     delta: f64,
     dark_mode: bool,
@@ -232,7 +232,7 @@ impl RewriteWithDifferentialPrivacyWithDot {
         let relations = self.dataset.into();
         let relation = Relation::try_from(query.with(&relations)).unwrap();
         let synthetic_data = SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect());
-        let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.protected_entity.iter().map(|(source, links, protected_col)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), protected_col.as_str())).collect();
+        let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
         let budget = Budget::new(self.epsilon, self.delta);
         let dp_relation = relation.rewrite_with_differential_privacy(&relations, synthetic_data, privacy_unit, budget)?;
@@ -284,7 +284,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rewrite_as_pep_serialize() {
+    fn test_rewrite_as_pup_serialize() {
         let request = RewriteAsPrivacyUnitPreserving {
             dataset: Dataset { tables: vec![
                 Table {
@@ -327,15 +327,15 @@ mod tests {
     }
 
     #[test]
-    fn test_rewrite_as_pep_deserialize() {
-        let request_str = r#"{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}"#;
+    fn test_rewrite_as_pup_deserialize() {
+        let request_str = r#"{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"privacy_unit":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}"#;
         let request: RewriteAsPrivacyUnitPreserving = serde_json::from_str(&request_str).unwrap();
         println!("{:?}", request);
     }
 
     #[test]
-    fn test_rewrite_as_pep() {
-        let request_str = r#"{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}"#;
+    fn test_rewrite_as_pup() {
+        let request_str = r#"{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"privacy_unit":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}"#;
         let request: RewriteAsPrivacyUnitPreserving = serde_json::from_str(&request_str).unwrap();
         println!("{:?}", request.response().unwrap());
     }
@@ -371,7 +371,7 @@ mod tests {
                 ("user_table".to_string(), "synthetic_user_table".to_string()),
                 ("action_table".to_string(), "synthetic_action_table".to_string()),
             ],
-            protected_entity: vec![
+            privacy_unit: vec![
                 ("user_table".to_string(), vec![], "id".to_string()),
                 ("action_table".to_string(), vec![("user_id".to_string(), "user_table".to_string(), "id".to_string())], "id".to_string()),
             ],
@@ -386,7 +386,7 @@ mod tests {
     #[test]
     fn test_rewrite_with_dp_deserialize() {
         let request_str = r#"
-        {"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}
+        {"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"privacy_unit":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}
 "#;
         let request: RewriteWithDifferentialPrivacy = serde_json::from_str(&request_str).unwrap();
         println!("{:?}", request);
@@ -396,7 +396,7 @@ mod tests {
     fn test_rewrite_with_dp() {
         let auth = Authenticator::get("secret_key.pem").unwrap();
         let request_str = r#"
-        {"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}
+        {"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"privacy_unit":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}
 "#;
         let request: RewriteWithDifferentialPrivacy = serde_json::from_str(&request_str).unwrap();
         println!("{:?}", request.response(&auth).unwrap());

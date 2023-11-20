@@ -9,7 +9,7 @@ content-type: application/json
 
 {"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}
 
-### Get the pep version of the relation
+### Get the pup version of the relation
 POST https://qrlew.sarus.app/rewrite_as_protected_entity_preserving HTTP/1.2
 content-type: application/json
 
@@ -49,7 +49,7 @@ content-type: application/json
   "signature": "_SBUJbslAMswREXP90hdoB2TxgyETnBDZ0FXMcKJtv5YKlBOhyG9+z1nAS6ewmoiD8fl+4GZZV9W7YwNWVh6bxEsM8ThSGeddX2Jh/blVGWgn8+vmn1et98dKVX/Bmg/4PKGOmOx9xGCEQEgclx2cdineIVppwXetHFLGMmmcJ28AFS+JUQqlmnQ6LqqqR8VrL68et8QmQasnBQOkW+gYIa+7XTl05BEiMI+WH4Cn/CNfPnpOygudkp1yFXP5YtbO3X5zo3TzDGltbg1yApVJouYGwqVCbSQTLQj1tjJlE6MIVHrt0Yg172qi0jC+6SZtxlWbQn/mDhN9s91tiB8BOA"
 }
 
-### Get the pep version of the relation
+### Get the pup version of the relation
 POST https://qrlew.sarus.app/rewrite_as_protected_entity_preserving_with_dot HTTP/1.2
 content-type: application/json
 
