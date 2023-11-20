@@ -3,7 +3,7 @@ pub mod request;
 pub mod response;
 // Reexport
 pub use auth::Authenticator;
-pub use request::{Dot, RewriteAsProtectedEntityPreserving, RewriteWithDifferentialPrivacy};
+pub use request::{Dot, RewriteAsPrivacyUnitPreserving, RewriteWithDifferentialPrivacy};
 pub use response::Response;
 
 use std::{error, result, fmt, io, string, sync::OnceLock};
@@ -154,7 +154,7 @@ async fn dot(extract::Json(dot_request): extract::Json<request::Dot>) -> Result<
     dot_request.response()
 }
 
-async fn rewrite_as_protected_entity_preserving(extract::Json(rewrite_as_protected_entity_preserving_request): extract::Json<request::RewriteAsProtectedEntityPreserving>) -> Result<Response> {
+async fn rewrite_as_protected_entity_preserving(extract::Json(rewrite_as_protected_entity_preserving_request): extract::Json<request::RewriteAsPrivacyUnitPreserving>) -> Result<Response> {
     rewrite_as_protected_entity_preserving_request.response()
 }
 
@@ -162,7 +162,7 @@ async fn rewrite_with_differential_privacy(extract::Json(rewrite_with_differenti
     rewrite_with_differential_privacy_request.response(auth())
 }
 
-async fn rewrite_as_protected_entity_preserving_with_dot(extract::Json(rewrite_as_protected_entity_preserving_request_with_dot): extract::Json<request::RewriteAsProtectedEntityPreservingWithDot>) -> Result<Response> {
+async fn rewrite_as_protected_entity_preserving_with_dot(extract::Json(rewrite_as_protected_entity_preserving_request_with_dot): extract::Json<request::RewriteAsPrivacyUnitPreservingWithDot>) -> Result<Response> {
     rewrite_as_protected_entity_preserving_request_with_dot.response()
 }
 
