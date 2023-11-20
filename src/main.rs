@@ -154,16 +154,16 @@ async fn dot(extract::Json(dot_request): extract::Json<request::Dot>) -> Result<
     dot_request.response()
 }
 
-async fn rewrite_as_protected_entity_preserving(extract::Json(rewrite_as_protected_entity_preserving_request): extract::Json<request::RewriteAsPrivacyUnitPreserving>) -> Result<Response> {
-    rewrite_as_protected_entity_preserving_request.response()
+async fn rewrite_as_privacy_unit_preserving(extract::Json(rewrite_as_privacy_unit_preserving_request): extract::Json<request::RewriteAsPrivacyUnitPreserving>) -> Result<Response> {
+    rewrite_as_privacy_unit_preserving_request.response()
 }
 
 async fn rewrite_with_differential_privacy(extract::Json(rewrite_with_differential_privacy_request): extract::Json<request::RewriteWithDifferentialPrivacy>) -> Result<Response> {
     rewrite_with_differential_privacy_request.response(auth())
 }
 
-async fn rewrite_as_protected_entity_preserving_with_dot(extract::Json(rewrite_as_protected_entity_preserving_request_with_dot): extract::Json<request::RewriteAsPrivacyUnitPreservingWithDot>) -> Result<Response> {
-    rewrite_as_protected_entity_preserving_request_with_dot.response()
+async fn rewrite_as_privacy_unit_preserving_with_dot(extract::Json(rewrite_as_privacy_unit_preserving_request_with_dot): extract::Json<request::RewriteAsPrivacyUnitPreservingWithDot>) -> Result<Response> {
+    rewrite_as_privacy_unit_preserving_request_with_dot.response()
 }
 
 async fn rewrite_with_differential_privacy_with_dot(extract::Json(rewrite_with_differential_privacy_request_with_dot): extract::Json<request::RewriteWithDifferentialPrivacyWithDot>) -> Result<Response> {
@@ -184,9 +184,9 @@ async fn main() {
         .route("/public_key", get(public_key))
         .route("/verify", post(verify))
         .route("/dot", post(dot))
-        .route("/rewrite_as_protected_entity_preserving", post(rewrite_as_protected_entity_preserving))
+        .route("/rewrite_as_privacy_unit_preserving", post(rewrite_as_privacy_unit_preserving))
         .route("/rewrite_with_differential_privacy", post(rewrite_with_differential_privacy))
-        .route("/rewrite_as_protected_entity_preserving_with_dot", post(rewrite_as_protected_entity_preserving_with_dot))
+        .route("/rewrite_as_privacy_unit_preserving_with_dot", post(rewrite_as_privacy_unit_preserving_with_dot))
         .route("/rewrite_with_differential_privacy_with_dot", post(rewrite_with_differential_privacy_with_dot))
         .layer(
             TraceLayer::new_for_http()
@@ -208,13 +208,4 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
-
-    // Test with:
-    // curl -d '{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}' -H "Content-Type: application/json" -X POST localhost:3000/dot
-    // curl -d '{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}' -H "Content-Type: application/json" -X POST localhost:3000/rewrite_as_protected_entity_preserving
-    // curl -d '{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}' -H "Content-Type: application/json" -X POST localhost:3000/rewrite_with_differential_privacy
-    // Or:
-    // URI=https://qrlew.sarus.app ; curl -d '{"dataset":{"tables":[{"name":"table_1","path":["schema","table_1"],"schema":{"fields":[{"name":"a","data_type":"Float"},{"name":"b","data_type":"Integer"}]},"size":10000}]},"query":"SELECT * FROM table_1","dark_mode":false}' -H "Content-Type: application/json" -X POST ${URI}/dot
-    // URI=https://qrlew.sarus.app ; curl -d '{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT * FROM action_table","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}' -H "Content-Type: application/json" -X POST ${URI}/rewrite_as_protected_entity_preserving
-    // URI=https://qrlew.sarus.app ; curl -d '{"dataset":{"tables":[{"name":"user_table","path":["schema","user_table"],"schema":{"fields":[{"name":"id","data_type":"Integer"},{"name":"name","data_type":"Text"},{"name":"age","data_type":"Integer"},{"name":"weight","data_type":"Float"}]},"size":10000},{"name":"action_table","path":["schema","action_table"],"schema":{"fields":[{"name":"action","data_type":"Text"},{"name":"user_id","data_type":"Integer"},{"name":"duration","data_type":"Float"}]},"size":10000}]},"query":"SELECT sum(duration) FROM action_table WHERE duration > 0 AND duration < 24","synthetic_data":[["user_table","synthetic_user_table"],["action_table","synthetic_action_table"]],"protected_entity":[["user_table",[],"id"],["action_table",[["user_id","user_table","id"]],"id"]],"epsilon":1.0,"delta":0.00001}' -H "Content-Type: application/json" -X POST ${URI}/rewrite_with_differential_privacy
 }
