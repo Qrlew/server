@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2023-11-19
+### Added
+- Uses SD now
+
 ## [0.4.5] - 2023-11-13
 ### Added
 - Updated qrlew version to 0.4.12 (added public table support)
