@@ -16,7 +16,7 @@ env:
   DOCKER_REGISTRY: ghcr.io
   DOCKER_IMAGE: qrlew/server
   # For push to GCP
-  GCP_PROJECT_ID: sarus-tests
+  GCP_PROJECT_ID: sarus-qrlew
   GCP_LOCATION: europe-west4
   GCP_REPOSITORY: qrlew
   GCP_IMAGE: qrlew-server
