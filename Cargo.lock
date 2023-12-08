@@ -1230,9 +1230,9 @@ dependencies = [
 
 [[package]]
 name = "qrlew"
-version = "0.5.3"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0b7900d363088456f542c6ddf6493bd1a6017eae398a8e2ff83098f068326e7"
+checksum = "a4b80b11f805e7d238913e0ab812383418c95372e959ea323791503bf4fd4599"
 dependencies = [
  "base64",
  "chrono",
@@ -1255,7 +1255,7 @@ dependencies = [
 
 [[package]]
 name = "qrlew-server"
-version = "0.5.3"
+version = "0.5.5"
 dependencies = [
  "axum",
  "base64",
