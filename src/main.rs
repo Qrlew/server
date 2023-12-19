@@ -132,6 +132,12 @@ impl From<rsa::pkcs8::Error> for Error {
     }
 }
 
+impl From<chrono::ParseError> for Error {
+    fn from(err: chrono::ParseError) -> Self {
+        Error::other(err)
+    }
+}
+
 pub type Result<T> = result::Result<T, Error>;
 
 /// A global shared Authenticator

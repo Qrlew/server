@@ -1,6 +1,7 @@
-use std::{sync::Arc, ops::Deref};
-use serde::{Deserialize, Serialize};
-use serde_json;
+use std::{sync::Arc, convert::TryFrom};
+use serde::{Deserialize, Serialize, Deserializer};
+use serde_json::Value;
+use chrono::{NaiveDate, NaiveTime, NaiveDateTime, Duration};
 use qrlew::{self, Ready as _, Relation, With as _, ast::{Query, self}, expr::Identifier, synthetic_data::SyntheticData,
 privacy_unit_tracking::PrivacyUnit, differential_privacy::budget::Budget};
 use super::*;
@@ -20,6 +21,7 @@ enum DataType {
     Id,
 }
 
+
 impl From<DataType> for qrlew::DataType {
     fn from(value: DataType) -> Self {
         match value {
@@ -34,6 +36,76 @@ impl From<DataType> for qrlew::DataType {
             DataType::Duration => qrlew::DataType::duration(),
             DataType::Id => qrlew::DataType::id(),
         }
+    }
+}
+
+/// Convert Field into qrlew DataType
+fn data_type_from_field(value: Field) -> Option<qrlew::DataType> {
+    Some(match value {
+        Field {
+            name: _,
+            data_type,
+            range: None,
+            possible_values: None,
+            constraint: _,
+        } => match data_type {
+            DataType::Boolean => qrlew::DataType::boolean(),
+            DataType::Integer => qrlew::DataType::integer(),
+            DataType::Float => qrlew::DataType::float(),
+            DataType::Text => qrlew::DataType::text(),
+            DataType::Bytes => qrlew::DataType::bytes(),
+            DataType::Date => qrlew::DataType::date(),
+            DataType::Time => qrlew::DataType::time(),
+            DataType::DateTime => qrlew::DataType::date_time(),
+            DataType::Duration => qrlew::DataType::duration(),
+            DataType::Id => qrlew::DataType::id(),
+        },
+        Field {
+            name,
+            data_type,
+            range: Some((min, max)),
+            possible_values: None,
+            constraint: _,
+        } => match data_type {
+            DataType::Boolean => qrlew::DataType::boolean_interval(min.as_bool()?, max.as_bool()?),
+            DataType::Integer => qrlew::DataType::integer_interval(min.as_i64()?, max.as_i64()?),
+            DataType::Float => qrlew::DataType::float_interval(min.as_f64()?, max.as_f64()?),
+            DataType::Text => qrlew::DataType::text_interval(min.as_str()?.to_string(), max.as_str()?.to_string()),
+            DataType::Date => qrlew::DataType::date_interval(NaiveDate::parse_from_str(min.as_str()?, "%Y-%m-%d").ok()?, NaiveDate::parse_from_str(max.as_str()?, "%Y-%m-%d").ok()?),
+            DataType::Time => qrlew::DataType::time_interval(NaiveTime::parse_from_str(min.as_str()?, "%H:%M:%S").ok()?, NaiveTime::parse_from_str(max.as_str()?, "%H:%M:%S").ok()?),
+            DataType::DateTime => qrlew::DataType::date_time_interval(NaiveDateTime::parse_from_str(min.as_str()?, "%Y-%m-%d %H:%M:%S").ok()?, NaiveDateTime::parse_from_str(max.as_str()?, "%Y-%m-%d %H:%M:%S").ok()?),
+            DataType::Duration => qrlew::DataType::duration_interval(Duration::seconds(min.as_i64()?), Duration::seconds(max.as_i64()?)),
+            DataType::Id => qrlew::DataType::id(),
+            _ => None?,
+        },
+        Field {
+            name: _,
+            data_type,
+            range: None,
+            possible_values: Some(possible_values),
+            constraint: _,
+        } => match data_type {
+            DataType::Boolean => qrlew::DataType::boolean_values(possible_values.into_iter().filter_map(|v| v.as_bool()).collect::<Vec<_>>()),
+            DataType::Integer => qrlew::DataType::integer_values(possible_values.into_iter().filter_map(|v| v.as_i64()).collect::<Vec<_>>()),
+            DataType::Float => qrlew::DataType::float_values(possible_values.into_iter().filter_map(|v| v.as_f64()).collect::<Vec<_>>()),
+            DataType::Text => qrlew::DataType::text_values(possible_values.into_iter().filter_map(|v| Some(v.as_str()?.to_string())).collect::<Vec<_>>()),
+            DataType::Date => qrlew::DataType::date_values(possible_values.into_iter().filter_map(|v| NaiveDate::parse_from_str(v.as_str()?, "%Y-%m-%d").ok()).collect::<Vec<_>>()),
+            DataType::Time => qrlew::DataType::time_values(possible_values.into_iter().filter_map(|v| NaiveTime::parse_from_str(v.as_str()?, "%H:%M:%S").ok()).collect::<Vec<_>>()),
+            DataType::DateTime => qrlew::DataType::date_time_values(possible_values.into_iter().filter_map(|v| NaiveDateTime::parse_from_str(v.as_str()?, "%Y-%m-%d %H:%M:%S").ok()).collect::<Vec<_>>()),
+            DataType::Duration => qrlew::DataType::duration_values(possible_values.into_iter().filter_map(|v| Some(Duration::seconds(v.as_i64()?))).collect::<Vec<_>>()),
+            DataType::Id => qrlew::DataType::id(),
+            _ => None?,
+        },
+        field => None?,
+    })
+}
+
+impl TryFrom<Field> for qrlew::DataType {
+    type Error = Error;
+
+    fn try_from(value: Field) -> Result<Self> {
+        let err = Error::other(value.name.clone());
+        data_type_from_field(value).ok_or(err)
     }
 }
 
@@ -52,10 +124,12 @@ impl From<Constraint> for qrlew::relation::Constraint {
 }
 
 /// Field
-#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 struct Field {
     name: String,
     data_type: DataType,
+    range: Option<(Value, Value)>,
+    possible_values: Option<Vec<Value>>,
     constraint: Option<Constraint>,
 }
 
@@ -66,7 +140,7 @@ impl From<Field> for qrlew::relation::Field {
 }
 
 /// Schema
-#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 struct Schema {
     fields: Vec<Field>,
 }
@@ -78,7 +152,7 @@ impl From<Schema> for qrlew::relation::Schema {
 }
 
 /// Table
-#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 struct Table {
     name: String,
     path: Vec<String>,
@@ -98,7 +172,7 @@ impl From<Table> for qrlew::Relation {
 }
 
 /// Dataset
-#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 struct Dataset {
     tables: Vec<Table>,
 }
@@ -109,7 +183,7 @@ impl From<Dataset> for qrlew::hierarchy::Hierarchy<Arc<qrlew::Relation>> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Dot {
     dataset: Dataset,
     query: String,
@@ -125,7 +199,7 @@ impl Dot {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct RewriteAsPrivacyUnitPreserving {
     dataset: Dataset,
     query: String,
@@ -149,7 +223,7 @@ impl RewriteAsPrivacyUnitPreserving {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct RewriteWithDifferentialPrivacy {
     dataset: Dataset,
     query: String,
@@ -173,7 +247,7 @@ impl RewriteWithDifferentialPrivacy {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct QueryWithDot {
     query: String,
     dot: String,
@@ -188,7 +262,7 @@ impl QueryWithDot {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct RewriteAsPrivacyUnitPreservingWithDot {
     dataset: Dataset,
     query: String,
@@ -215,7 +289,7 @@ impl RewriteAsPrivacyUnitPreservingWithDot {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct RewriteWithDifferentialPrivacyWithDot {
     dataset: Dataset,
     query: String,
@@ -255,8 +329,8 @@ mod tests {
                     name: "table_1".to_string(),
                     path: vec!["schema".to_string(), "table_1".to_string()],
                     schema: Schema { fields: vec![
-                        Field { name: "a".to_string(), data_type: DataType::Float, constraint: None },
-                        Field { name: "b".to_string(), data_type: DataType::Integer, constraint: Some(Constraint::Unique) },
+                        Field { name: "a".to_string(), data_type: DataType::Float, constraint: None, range: None, possible_values: None },
+                        Field { name: "b".to_string(), data_type: DataType::Integer, constraint: Some(Constraint::Unique), range: None, possible_values: None },
                     ]},
                     size: 10000 }
             ]},
@@ -291,10 +365,10 @@ mod tests {
                     name: "user_table".to_string(),
                     path: vec!["schema".to_string(), "user_table".to_string()],
                     schema: Schema { fields: vec![
-                        Field { name: "id".to_string(), data_type: DataType::Integer, constraint: Some(Constraint::Unique) },
-                        Field { name: "name".to_string(), data_type: DataType::Text, constraint: None },
-                        Field { name: "age".to_string(), data_type: DataType::Integer, constraint: None },
-                        Field { name: "weight".to_string(), data_type: DataType::Float, constraint: None },
+                        Field { name: "id".to_string(), data_type: DataType::Integer, constraint: Some(Constraint::Unique), range: None, possible_values: None },
+                        Field { name: "name".to_string(), data_type: DataType::Text, constraint: None, range: None, possible_values: None },
+                        Field { name: "age".to_string(), data_type: DataType::Integer, constraint: None, range: None, possible_values: None },
+                        Field { name: "weight".to_string(), data_type: DataType::Float, constraint: None, range: None, possible_values: None },
                     ]},
                     size: 10000,
                 },
@@ -302,9 +376,9 @@ mod tests {
                     name: "action_table".to_string(),
                     path: vec!["schema".to_string(), "action_table".to_string()],
                     schema: Schema { fields: vec![
-                        Field { name: "action".to_string(), data_type: DataType::Text, constraint: None },
-                        Field { name: "user_id".to_string(), data_type: DataType::Integer, constraint: None },
-                        Field { name: "duration".to_string(), data_type: DataType::Float, constraint: None },
+                        Field { name: "action".to_string(), data_type: DataType::Text, constraint: None, range: None, possible_values: None },
+                        Field { name: "user_id".to_string(), data_type: DataType::Integer, constraint: None, range: None, possible_values: None },
+                        Field { name: "duration".to_string(), data_type: DataType::Float, constraint: None, range: None, possible_values: None },
                     ]},
                     size: 10000,
                 },
@@ -348,10 +422,10 @@ mod tests {
                     name: "user_table".to_string(),
                     path: vec!["schema".to_string(), "user_table".to_string()],
                     schema: Schema { fields: vec![
-                        Field { name: "id".to_string(), data_type: DataType::Integer, constraint: Some(Constraint::Unique) },
-                        Field { name: "name".to_string(), data_type: DataType::Text, constraint: None },
-                        Field { name: "age".to_string(), data_type: DataType::Integer, constraint: None },
-                        Field { name: "weight".to_string(), data_type: DataType::Float, constraint: None },
+                        Field { name: "id".to_string(), data_type: DataType::Integer, constraint: Some(Constraint::Unique), range: None, possible_values: None },
+                        Field { name: "name".to_string(), data_type: DataType::Text, constraint: None, range: None, possible_values: None },
+                        Field { name: "age".to_string(), data_type: DataType::Integer, constraint: None, range: None, possible_values: None },
+                        Field { name: "weight".to_string(), data_type: DataType::Float, constraint: None, range: None, possible_values: None },
                     ]},
                     size: 10000,
                 },
@@ -359,9 +433,9 @@ mod tests {
                     name: "action_table".to_string(),
                     path: vec!["schema".to_string(), "action_table".to_string()],
                     schema: Schema { fields: vec![
-                        Field { name: "action".to_string(), data_type: DataType::Text, constraint: None },
-                        Field { name: "user_id".to_string(), data_type: DataType::Integer, constraint: None },
-                        Field { name: "duration".to_string(), data_type: DataType::Float, constraint: None },
+                        Field { name: "action".to_string(), data_type: DataType::Text, constraint: None, range: None, possible_values: None },
+                        Field { name: "user_id".to_string(), data_type: DataType::Integer, constraint: None, range: None, possible_values: None },
+                        Field { name: "duration".to_string(), data_type: DataType::Float, constraint: None, range: None, possible_values: None },
                     ]},
                     size: 10000,
                 },
