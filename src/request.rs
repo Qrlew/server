@@ -135,7 +135,8 @@ struct Field {
 
 impl From<Field> for qrlew::relation::Field {
     fn from(value: Field) -> Self {
-        qrlew::relation::Field::new(value.name, value.data_type.into(), value.constraint.map(Constraint::into))
+        let data_type = value.clone().try_into().unwrap();
+        qrlew::relation::Field::new(value.name, data_type, value.constraint.map(Constraint::into))
     }
 }
 
