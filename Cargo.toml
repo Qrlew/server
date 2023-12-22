@@ -14,8 +14,8 @@ keywords = ["sql", "data", "web", "http"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-qrlew = "0.6.0"
-axum = "0.7"
+qrlew = "0.7.0"
+axum = "0.7.2"
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
 tower-http = { version = "0.5.0", features = ["cors", "trace"] }
 tracing = "0.1"

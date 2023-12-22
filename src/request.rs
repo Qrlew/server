@@ -215,7 +215,7 @@ impl RewriteAsPrivacyUnitPreserving {
         let query = qrlew::sql::relation::parse(&self.query)?;
         let relations = self.dataset.into();
         let relation = Relation::try_from(query.with(&relations)).unwrap();
-        let synthetic_data = SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect());
+        let synthetic_data = (!self.synthetic_data.is_empty()).then(|| SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect()));
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
         let budget = Budget::new(self.epsilon, self.delta);
@@ -239,7 +239,7 @@ impl RewriteWithDifferentialPrivacy {
         let query = qrlew::sql::relation::parse(&self.query)?;
         let relations = self.dataset.into();
         let relation = Relation::try_from(query.with(&relations)).unwrap();
-        let synthetic_data = SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect());
+        let synthetic_data = (!self.synthetic_data.is_empty()).then(|| SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect()));
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
         let budget = Budget::new(self.epsilon, self.delta);
@@ -279,7 +279,7 @@ impl RewriteAsPrivacyUnitPreservingWithDot {
         let query = qrlew::sql::relation::parse(&self.query)?;
         let relations = self.dataset.into();
         let relation = Relation::try_from(query.with(&relations)).unwrap();
-        let synthetic_data = SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect());
+        let synthetic_data = (!self.synthetic_data.is_empty()).then(|| SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect()));
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
         let budget = Budget::new(self.epsilon, self.delta);
@@ -306,7 +306,7 @@ impl RewriteWithDifferentialPrivacyWithDot {
         let query = qrlew::sql::relation::parse(&self.query)?;
         let relations = self.dataset.into();
         let relation = Relation::try_from(query.with(&relations)).unwrap();
-        let synthetic_data = SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect());
+        let synthetic_data = (!self.synthetic_data.is_empty()).then(|| SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect()));
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
         let budget = Budget::new(self.epsilon, self.delta);
