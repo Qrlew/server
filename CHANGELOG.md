@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2023-12-22
+### Changed
+- Removed --locked in the dockerfile
+
 ## [0.7.0] - 2023-12-22
 ### Added
 - SD are optional

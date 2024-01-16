@@ -6,7 +6,7 @@ RUN \
   --mount=type=cache,target=/app/target/ \
   --mount=type=cache,target=/usr/local/cargo/registry/ \
   /bin/bash -c \
-  'cargo build --locked --release --package qrlew-server && \
+  'cargo build --release --package qrlew-server && \
   cp ./target/release/qrlew-server /app && \
   echo "${SECRET_KEY}" > /app/secret_key.pem'
 
