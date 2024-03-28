@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize, Deserializer};
 use serde_json::Value;
 use chrono::{NaiveDate, NaiveTime, NaiveDateTime, Duration};
 use qrlew::{self, Ready as _, Relation, With as _, ast::{Query, self}, expr::Identifier, synthetic_data::SyntheticData,
-privacy_unit_tracking::PrivacyUnit, differential_privacy::budget::Budget};
+privacy_unit_tracking::PrivacyUnit, differential_privacy::DpParameters};
 use super::*;
 
 /// Simplified DataType
@@ -218,8 +218,8 @@ impl RewriteAsPrivacyUnitPreserving {
         let synthetic_data = (!self.synthetic_data.is_empty()).then(|| SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect()));
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
-        let budget = Budget::new(self.epsilon, self.delta);
-        let pup_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, budget)?;
+        let dp_parameters = DpParameters::from_epsilon_delta(self.epsilon, self.delta);
+        let pup_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, dp_parameters)?;
         Ok(Response::new(Query::from(pup_relation.relation()).to_string()))
     }
 }
@@ -242,8 +242,8 @@ impl RewriteWithDifferentialPrivacy {
         let synthetic_data = (!self.synthetic_data.is_empty()).then(|| SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect()));
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
-        let budget = Budget::new(self.epsilon, self.delta);
-        let dp_relation = relation.rewrite_with_differential_privacy(&relations, synthetic_data, privacy_unit, budget)?;
+        let dp_parameters = DpParameters::from_epsilon_delta(self.epsilon, self.delta);
+        let dp_relation = relation.rewrite_with_differential_privacy(&relations, synthetic_data, privacy_unit, dp_parameters)?;
         Ok(Response::signed(Query::from(dp_relation.relation()).to_string(), auth))
     }
 }
@@ -282,8 +282,8 @@ impl RewriteAsPrivacyUnitPreservingWithDot {
         let synthetic_data = (!self.synthetic_data.is_empty()).then(|| SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect()));
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
-        let budget = Budget::new(self.epsilon, self.delta);
-        let pup_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, budget)?;
+        let dp_parameters = DpParameters::from_epsilon_delta(self.epsilon, self.delta);
+        let pup_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, dp_parameters)?;
         let mut dot = Vec::new();
         pup_relation.relation().dot(&mut dot, if self.dark_mode {&["dark"]} else {&[]})?;
         Ok(Response::new(serde_json::to_string(&QueryWithDot::new(Query::from(pup_relation.relation()).to_string(), String::from_utf8(dot)?))?))
@@ -309,8 +309,8 @@ impl RewriteWithDifferentialPrivacyWithDot {
         let synthetic_data = (!self.synthetic_data.is_empty()).then(|| SyntheticData::new(self.synthetic_data.into_iter().map(|(table, synthetic_table)| (Identifier::from(table), Identifier::from(synthetic_table))).collect()));
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
-        let budget = Budget::new(self.epsilon, self.delta);
-        let dp_relation = relation.rewrite_with_differential_privacy(&relations, synthetic_data, privacy_unit, budget)?;
+        let dp_parameters = DpParameters::from_epsilon_delta(self.epsilon, self.delta);
+        let dp_relation = relation.rewrite_with_differential_privacy(&relations, synthetic_data, privacy_unit, dp_parameters)?;
         let mut dot = Vec::new();
         dp_relation.relation().dot(&mut dot, if self.dark_mode {&["dark"]} else {&[]})?;
         Ok(Response::signed(serde_json::to_string(&QueryWithDot::new(Query::from(dp_relation.relation()).to_string(), String::from_utf8(dot)?))?, auth))
