@@ -219,7 +219,7 @@ impl RewriteAsPrivacyUnitPreserving {
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
         let dp_parameters = DpParameters::from_epsilon_delta(self.epsilon, self.delta);
-        let pup_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, dp_parameters)?;
+        let pup_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, dp_parameters, None)?;
         Ok(Response::new(Query::from(pup_relation.relation()).to_string()))
     }
 }
@@ -283,7 +283,7 @@ impl RewriteAsPrivacyUnitPreservingWithDot {
         let borrowed_privacy_unit: Vec<(&str, Vec<(&str, &str, &str)>, &str)> = self.privacy_unit.iter().map(|(source, links, privacy_unit)| (source.as_str(), links.iter().map(|(source_col, target, target_col)| (source_col.as_str(), target.as_str(), target_col.as_str())).collect(), privacy_unit.as_str())).collect();
         let privacy_unit = PrivacyUnit::from(borrowed_privacy_unit);
         let dp_parameters = DpParameters::from_epsilon_delta(self.epsilon, self.delta);
-        let pup_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, dp_parameters)?;
+        let pup_relation = relation.rewrite_as_privacy_unit_preserving(&relations, synthetic_data, privacy_unit, dp_parameters, None)?;
         let mut dot = Vec::new();
         pup_relation.relation().dot(&mut dot, if self.dark_mode {&["dark"]} else {&[]})?;
         Ok(Response::new(serde_json::to_string(&QueryWithDot::new(Query::from(pup_relation.relation()).to_string(), String::from_utf8(dot)?))?))
